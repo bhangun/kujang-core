@@ -4,7 +4,7 @@
 
 
 # Kujang Core
-Core of [kujang-url]
+Core of [generator-kujang]
 
 
 # Kujang Generator

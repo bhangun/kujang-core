@@ -10,12 +10,12 @@
     "swagger",
     "oas3"
   ],
-  "homepage": "https://github.com/bhangun/generator-kujang",
+  "homepage": "https://github.com/bhangun/kujang-core",
   "author": "bhangun hartani <bhangunh@kays.tech> (https://kays.tech)",
   "main": "generators/app/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bhangun/generator-kujang.git"
+    "url": "git+https://github.com/bhangun/kujang-core.git"
   },
   "dependencies": {
     "chalk": "^4.1.2",
@@ -36,7 +36,7 @@
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/bhangun/generator-kujang/issues"
+    "url": "https://github.com/bhangun/kujang-core/issues"
   },
   "directories": {
     "test": "test"

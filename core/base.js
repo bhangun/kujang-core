@@ -74,7 +74,7 @@ module.exports = class extends Generator {
   }
 
   /**
-   * Fetch files from the generator-kujang instance installed
+   * Fetch files from the kujang-core instance installed
    * @param {...string} subpath : the path to fetch from
    */
   fetchFrom(...subpath) {

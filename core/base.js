@@ -4,7 +4,6 @@ const _ = require('lodash');
 const ejs = require('ejs');
 const chalk = require('chalk');
 
-
 module.exports = class extends Generator {
 
   constructor(args, opts, features) {
@@ -12,6 +11,29 @@ module.exports = class extends Generator {
     super(args, opts, features);
     // expose lodash to templates
     this._ = _;
+  }
+
+  initializing(packagejs) {
+
+    const version = chalk.yellow(`${packagejs.version}`)
+
+    this.log(`${chalk.bold.yellowBright('            ▄     ')}`);
+    this.log(`${chalk.bold.yellowBright('          ▄▄██')}`);
+    this.log(`${chalk.bold.yellowBright('       ▄▄░░████')}`);
+    this.log(`${chalk.bold.yellowBright('     ▄░░  ░████')}`);
+    this.log(`${chalk.bold.yellowBright('    ░░  ░█████  ')}${chalk.bold.cyan('__              __')}`);
+    this.log(`${chalk.bold.yellowBright('   ░  ░░█████  ')}${chalk.bold.cyan('|  | ____ ___   |__|____    ____    ____ ')}`);
+    this.log(`${chalk.bold.yellowBright('  ░░░░░████    ')}${chalk.bold.cyan('|  |/ /  |   \\  |  \\__  \\  /    \\  / ___\\')}`);
+    this.log(`${chalk.bold.yellowBright('  ░░░███       ')}${chalk.bold.cyan('|    <|  |   /  |  |/ __ \\|   |  \\/ /_/  >')}`);
+    this.log(`${chalk.bold.yellowBright('   ░░░██       ')}${chalk.bold.cyan('|__|__ \\____/\\__|  (____  /___|  /\\___  /     ')}`);
+    this.log(`${chalk.bold.yellowBright('    ░░░██     ▄      ')}${chalk.bold.cyan('\\/    \\______|    \\/     \\//_____/')}`);
+    this.log(`${chalk.bold.yellowBright('     ░░░░██████ ')}`);
+    this.log(`${chalk.bold.yellowBright('      ░░░░░░██ ')}`);
+    this.log(`${chalk.bold.redBright('        ░░██▌  ')}`);
+    this.log(`${chalk.bold.redBright('        ░░██')}   Salamku to the ${chalk.bold.yellow('Kujang')} generator! ${version}`);
+    this.log(`${chalk.bold.redBright('        ░░███')}`);
+    this.log(`${chalk.bold.red('         ▀▀▀▀')}`);
+
   }
 
   /**
@@ -27,7 +49,6 @@ module.exports = class extends Generator {
   getDefaultAppName() {
     return /^[a-zA-Z0-9-_]+$/.test(path.basename(process.cwd())) ? path.basename(process.cwd()) : 'kujang';
   }
-
 
   /**
  * Apply output customizer.
@@ -185,25 +206,6 @@ module.exports = class extends Generator {
       args.forEach(arg => this._debug(arg));
     }
   }
-
-
-  /**
-   * Check if Node is installed
-   */
-  /* checkNode() {
-   if (this.skipChecks) return;
-   const nodeFromPackageJson = packagejs.engines.node;
-   if (!semver.satisfies(process.version, nodeFromPackageJson)) {
-     this.warning(
-       `Your NodeJS version is too old (${process.version}). You should use at least NodeJS ${chalk.bold(nodeFromPackageJson)}`
-     );
-   }
-   if (!(process.release || {}).lts) {
-     this.warning(
-       'Your Node version is not LTS (Long Term Support), use it at your own risk! Kujang does not support non-LTS releases, so if you encounter a bug, please use a LTS version first.'
-     );
-   }
- } */
 
   /**
    * Check if Git is installed

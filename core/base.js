@@ -3,6 +3,7 @@ const path = require('path');
 const _ = require('lodash');
 const ejs = require('ejs');
 const chalk = require('chalk');
+const utils = require('./utils');
 
 module.exports = class extends Generator {
 
@@ -190,6 +191,21 @@ module.exports = class extends Generator {
   }
 
   /**
+   * 
+   * @param {*} path 
+   * @param {*} contents 
+   */
+  writeKujangJson(_path, contents) {
+    this.fs.writeJSON(_path + '/.kujang.json', contents)
+  }
+
+  transformApi(appsName, path_api, callback) {
+    utils.transformApi(appsName, path_api, (api) => {
+      callback(api)
+    })
+  }
+
+  /**
    * Print a debug message.
    *
    * @param {string} msg - message to print
@@ -213,5 +229,29 @@ module.exports = class extends Generator {
   checkGit() {
     if (this.skipChecks || this.skipClient) return;
     this.gitInstalled = this.isGitInstalled();
+  }
+
+  chalkYellowBright(text){
+    return chalk.bold.yellowBright(text)
+  }
+
+  chalkYellow(text){
+    return chalk.bold.yellow(text)
+  }
+
+  chalkYellow(text){
+    return chalk.bold.yellowBright(text)
+  }
+
+  chalkBlueBright(text){
+    return chalk.bold.blueBright(text)
+  }
+
+  chalkYellow(text){
+    return chalk.bold.yellowBright(text)
+  }
+
+  chalkRedBright(text){
+    return chalk.bold.redBright(text)
   }
 }

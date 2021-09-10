@@ -240,6 +240,7 @@ function getPathMethod(path) {
     const contentsRequest = []
     let typeRequest = ''
     let required = []
+    let properties = []
     const result = getResponses(m)
 
     if (m.requestBody)

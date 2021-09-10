@@ -35,7 +35,7 @@ function mappingProps(api, appsName) {
  */
 function getSecurity(api) {
   const schema = []
-  Object.entries(api).forEach(sch => {
+  if(api) Object.entries(api).forEach(sch => {
     let scopes = []
     let url = ''
     let typeName = ''
@@ -71,7 +71,7 @@ function getSecurity(api) {
  */
 function getScopes(input) {
   const scopes = []
-  Object.entries(input).forEach(s => {
+  if(input) Object.entries(input).forEach(s => {
     scopes.push({
       scope: s[0],
       description: s[1]
@@ -90,7 +90,8 @@ function mappingEntities(appsName, api) {
 
   const schema = api.components.schemas
   const entities = []
-  Object.entries(schema).forEach(entity => {
+
+  if(schema) Object.entries(schema).forEach(entity => {
     entities.push({
       appsName: appsName,
       pkType: 'String',
@@ -146,8 +147,6 @@ function mappingFields(obj, entities) {
   newType.description = type.description? type.description:''
   newType.dart = ''
   newType.dartDesc = ''
-
-// console.log(type.xml)
 
   switch (type.type) {
     case 'integer':
@@ -210,7 +209,7 @@ function mappingFields(obj, entities) {
  */
 function getPaths(api) {
   const paths = []
-  Object.entries(api.paths).forEach(path => {
+  if(api) Object.entries(api.paths).forEach(path => {
     const param = splitParam(path[0])
     const hasParam = path[0].split('{').length > 1
     paths.push({
@@ -234,7 +233,7 @@ function splitParam(path) {
 function getPathMethod(path) {
   const methods = []
 
-  Object.entries(path).forEach(method => {
+  if(path) Object.entries(path).forEach(method => {
     const m = method[1];
     const contentsRequest = []
     let typeRequest = ''

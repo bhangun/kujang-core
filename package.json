@@ -18,6 +18,7 @@
     "url": "git+https://github.com/bhangun/kujang-core.git"
   },
   "dependencies": {
+    "@apidevtools/swagger-parser": "^10.0.3",
     "chalk": "^4.1.2",
     "ejs": "^3.1.6",
     "lodash": "^4.17.21",

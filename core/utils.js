@@ -1,6 +1,8 @@
 const _ = require('lodash');
+const SwaggerParser = require("@apidevtools/swagger-parser");
 
 module.exports = {
+  transformApi,
   mappingProps,
   mappingEntities,
   mappingFields,
@@ -24,7 +26,7 @@ function mappingProps(api, appsName) {
     entities: mappingEntities(appsName, api),
     paths: getPaths(api),
     servers: api.servers,
-    securitySchemes: getSecurity(api.components.securitySchemes),
+    securitySchemes: api.components ? getSecurity(api.components.securitySchemes) : {},
     tags: api.tags
   }
 }
@@ -35,21 +37,21 @@ function mappingProps(api, appsName) {
  */
 function getSecurity(api) {
   const schema = []
-  if(api) Object.entries(api).forEach(sch => {
+  if (api) Object.entries(api).forEach(sch => {
     let scopes = []
     let url = ''
     let typeName = ''
     let position = ''
 
-    if (sch[1].flows){
+    if (sch[1].flows) {
       scopes = getScopes(sch[1].flows.implicit.scopes)
       url = sch[1].flows.implicit.authorizationUrl
     }
-    
-    if(sch[1].name)
+
+    if (sch[1].name)
       typeName = sch[1].name
 
-    if(sch[1].in)
+    if (sch[1].in)
       position = sch[1].in
 
     schema.push({
@@ -71,7 +73,7 @@ function getSecurity(api) {
  */
 function getScopes(input) {
   const scopes = []
-  if(input) Object.entries(input).forEach(s => {
+  if (input) Object.entries(input).forEach(s => {
     scopes.push({
       scope: s[0],
       description: s[1]
@@ -88,10 +90,10 @@ function getScopes(input) {
  */
 function mappingEntities(appsName, api) {
 
-  const schema = api.components.schemas
+  const schema = api.components ? api.components.schemas : {}
   const entities = []
 
-  if(schema) Object.entries(schema).forEach(entity => {
+  if (schema) Object.entries(schema).forEach(entity => {
     entities.push({
       appsName: appsName,
       pkType: 'String',
@@ -116,12 +118,12 @@ function mappingEntities(appsName, api) {
  */
 function mappingFields(obj, entities) {
   const fields = []
-  if(obj.properties)
+  if (obj.properties)
     Object.entries(obj.properties).forEach(field => {
       fields.push({
         fieldType: transformType(field[1], entities, field[1].enum),
         fieldName: _.camelCase(field[0]),
-        fieldIsEnum: field[1].enum? true : false,
+        fieldIsEnum: field[1].enum ? true : false,
         fieldValues: _.join(field[1].enum, ','),
         fieldDescription: field[1].description,
         fieldsContainOneToMany: false,
@@ -140,50 +142,50 @@ function mappingFields(obj, entities) {
  * @param {*} entities 
  * @returns 
  */
- function transformType(type, entities, isEnum) {
+function transformType(type, entities, isEnum) {
   let newType = {}
-  newType.origin = type.type?type.type:''
-  newType.example = type.example? type.example :''
-  newType.description = type.description? type.description:''
+  newType.origin = type.type ? type.type : ''
+  newType.example = type.example ? type.example : ''
+  newType.description = type.description ? type.description : ''
   newType.dart = ''
   newType.dartDesc = ''
 
   switch (type.type) {
     case 'integer':
-      if(type.format == 'int64')
+      if (type.format == 'int64')
         newType.dart = 'double'
-      else if (type.format == 'int32') 
+      else if (type.format == 'int32')
         newType.dart = 'int'
       break;
     case 'number':
-      if(type.format == 'float') 
+      if (type.format == 'float')
         newType.dart = 'Float'
-      else if (type.format == 'double') 
+      else if (type.format == 'double')
         newType.dart = 'double'
       break;
     case 'string':
-      switch (type.format){
+      switch (type.format) {
         case 'byte':
-        newType.dart = 'ByteData'
-        break;
-        case'binary': 
-        newType.dart = 'BinaryCodec'
-        break;
+          newType.dart = 'ByteData'
+          break;
+        case 'binary':
+          newType.dart = 'BinaryCodec'
+          break;
         case 'date':
-        newType.dart = 'DateTime'
-        break;
+          newType.dart = 'DateTime'
+          break;
         case 'date-time':
-        newType.dart = 'DateTime'
-        break;
-        case'password':
-        default: 
-        newType.dart = 'String'
-        break;
+          newType.dart = 'DateTime'
+          break;
+        case 'password':
+        default:
+          newType.dart = 'String'
+          break;
       }
       break;
-    case(type.type == 'Instant'): 
-        newType.dart = 'int'
-        newType.dartDesc = '.toIso8601String()' + 'Z'
+    case (type.type == 'Instant'):
+      newType.dart = 'int'
+      newType.dartDesc = '.toIso8601String()' + 'Z'
       break
     case 'array':
       newType.dart = 'List<String>'
@@ -192,14 +194,14 @@ function mappingFields(obj, entities) {
       newType.dart = 'String'
       break;
     case 'object':
-        newType.dart = type.xml?_.capitalize(type.xml.name):''
+      newType.dart = type.xml ? _.capitalize(type.xml.name) : ''
       break;
   }
-  
-  if(isEnum) newType.dart = 'String'
+
+  if (isEnum) newType.dart = 'String'
 
   return newType
-} 
+}
 
 
 
@@ -209,7 +211,7 @@ function mappingFields(obj, entities) {
  */
 function getPaths(api) {
   const paths = []
-  if(api) Object.entries(api.paths).forEach(path => {
+  if (api) Object.entries(api.paths).forEach(path => {
     const param = splitParam(path[0])
     const hasParam = path[0].split('{').length > 1
     paths.push({
@@ -233,7 +235,7 @@ function splitParam(path) {
 function getPathMethod(path) {
   const methods = []
 
-  if(path) Object.entries(path).forEach(method => {
+  if (path) Object.entries(path).forEach(method => {
     const m = method[1];
     const contentsRequest = []
     let typeRequest = ''
@@ -274,7 +276,7 @@ function getPathMethod(path) {
 function getResponses(list) {
   const responses = []
   let type = ''
-  if (list)
+  if (list && list.responses)
     Object.entries(list.responses).forEach(r => {
       const types = []
       let responseType = ''
@@ -325,4 +327,22 @@ function mappingRelationship(obj) {
   relationship.otherEntityName
  */
   return relationship
+}
+
+/**
+ * 
+ * @param {*} appsName 
+ * @param {*} path 
+ * @param {*} callback 
+ */
+function transformApi(appsName, path, callback) {
+
+  SwaggerParser.validate(path, (err, api) => {
+    if (err) {
+      console.error(err);
+    }
+    else {
+      callback(mappingProps(api, appsName))
+    }
+  })
 }

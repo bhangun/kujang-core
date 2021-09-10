@@ -30,7 +30,7 @@ module.exports = class extends Generator {
     this.log(`${chalk.bold.yellowBright('     ░░░░██████ ')}`);
     this.log(`${chalk.bold.yellowBright('      ░░░░░░██ ')}`);
     this.log(`${chalk.bold.redBright('        ░░██▌  ')}`);
-    this.log(`${chalk.bold.redBright('        ░░██')}   Salamku to the ${chalk.bold.yellow('Kujang')} generator! ${version}`);
+    this.log(`${chalk.bold.redBright('        ░░██')}   Salam to the ${chalk.bold.yellow('Kujang')} generator! ${version}`);
     this.log(`${chalk.bold.redBright('        ░░███')}`);
     this.log(`${chalk.bold.red('         ▀▀▀▀')}`);
 

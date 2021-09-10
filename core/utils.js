@@ -343,7 +343,7 @@ function transformApi(appsName, path, callback) {
       console.error(err);
     }
     else {
-      callback(mappingProps(api, appsName))
+      callback(mappingProps(api, appsName), api)
     }
   })
 }

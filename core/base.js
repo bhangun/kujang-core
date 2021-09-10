@@ -199,9 +199,18 @@ module.exports = class extends Generator {
     this.fs.writeJSON(_path + '/.kujang.json', contents)
   }
 
+  /**
+  * 
+  * @param {*} path 
+  * @param {*} contents 
+  */
+  writeOriginJson(_path, contents) {
+    this.fs.writeJSON(_path + '/.origin.json', contents)
+  }
+
   transformApi(appsName, path_api, callback) {
-    utils.transformApi(appsName, path_api, (api) => {
-      callback(api)
+    utils.transformApi(appsName, path_api, (api, origin) => {
+      callback(api, origin)
     })
   }
 
@@ -231,27 +240,27 @@ module.exports = class extends Generator {
     this.gitInstalled = this.isGitInstalled();
   }
 
-  chalkYellowBright(text){
+  chalkYellowBright(text) {
     return chalk.bold.yellowBright(text)
   }
 
-  chalkYellow(text){
+  chalkYellow(text) {
     return chalk.bold.yellow(text)
   }
 
-  chalkYellow(text){
+  chalkYellow(text) {
     return chalk.bold.yellowBright(text)
   }
 
-  chalkBlueBright(text){
+  chalkBlueBright(text) {
     return chalk.bold.blueBright(text)
   }
 
-  chalkYellow(text){
+  chalkYellow(text) {
     return chalk.bold.yellowBright(text)
   }
 
-  chalkRedBright(text){
+  chalkRedBright(text) {
     return chalk.bold.redBright(text)
   }
 }

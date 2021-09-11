@@ -364,6 +364,11 @@ function getResponses(list) {
   return responses ;
 }
 
+/**
+ * Get ResponseContentType
+ * @param {*} contentType 
+ * @returns 
+ */
 function _getResponseContentType(contentType){
   let name = ''
   let _props = []
@@ -387,27 +392,6 @@ function _getResponseContentType(contentType){
     required: req,
     properties: _getProperties(_props, [])
   }
-}
-
-/**
- * Mapping relationship of component/entities 
- * @param {*} obj 
- * @returns 
- */
-function mappingRelationship(obj) {
-  const relationship = []
-
-  /* relationship.otherEntityModulePath
-  relationship.otherEntityModuleName
-  relationship.otherEntityStateName =
-    relationship.otherEntityFieldCapitalized
-  relationship.otherentityClass = 'User';
-  relationship.otherEntityTableName
-  relationship.otherEntityNameCapitalized
-  relationship.otherEntityNamePlural
-  relationship.otherEntityName
- */
-  return relationship
 }
 
 /**

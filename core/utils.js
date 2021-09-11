@@ -285,12 +285,6 @@ function getPathMethod(path) {
       /// paths.<path>.<method>.operationId
       operationId: m.operationId,
 
-      // Request Body -> Deprecated
-      /* requestBodyDesc: m.requestBody ? m.requestBody.description : '',
-      requestBodyType: typeRequest,
-      requestBodyRequired: required,
-      requestContentType: reqContentType, */
-
       /// Request Body -> All included
       /// requestBody.content
       requestBody: _getRequestBody(m.requestBody, typeRequest, reqContentType, required, _properties),

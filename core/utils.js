@@ -6,7 +6,6 @@ module.exports = {
   mappingProps,
   mappingEntities,
   mappingFields,
-  mappingRelationship,
   getPaths,
   getPathMethod
 };
@@ -121,7 +120,7 @@ function mappingFields(obj, entities) {
   if (obj.properties)
     Object.entries(obj.properties).forEach(field => {
       fields.push({
-        fieldType: transformType(field[1], entities, field[1].enum),
+        fieldType: transformType(field[1], field[1].enum),
         fieldName: _.camelCase(field[0]),
         fieldIsEnum: field[1].enum ? true : false,
         fieldValues: _.join(field[1].enum, ','),
@@ -142,7 +141,7 @@ function mappingFields(obj, entities) {
  * @param {*} entities 
  * @returns 
  */
-function transformType(type, entities, isEnum) {
+function transformType(type, isEnum) {
   let newType = {}
   newType.origin = type.type ? type.type : ''
   newType.example = type.example ? type.example : ''
@@ -323,11 +322,17 @@ function _getRequestBody(requestBody, typeRequest, reqContentType, required, pro
 function _getProperties(props, req) {
   const properties = []
   if (props) Object.entries(props).forEach(el => {
+    const format = el[1].format?el[1].format:''
+    const type = el[1].type?el[1].type:''
+    const enumm = el[1].enum
+    const isEnum = el[1].enum?true:false
+
     properties.push({ 
       name: el[0], 
-      type: el[1].type,
-      enum: el[1].enum? _.join(el[1].enum, ',') : '',
-      format: el[1].format? el[1].format:'',  
+      dartType: transformType({type: type, format:format, isEnum: isEnum }),
+      type: type,
+      enum: enumm? _.join(enumm, ',') : '',
+      format: format,  
       example: el[1].example? el[1].example:'', 
       required: req?req.includes(el[0]):false })
   })

@@ -230,7 +230,7 @@ function getPaths(api) {
  * @returns 
  */
 function splitParam(path) {
-  return path.replace('{', '${')
+  return path.replaceAll('{', '${')
 }
 
 /**
@@ -246,8 +246,6 @@ function getPathMethod(path) {
     let typeRequest = ''
     let required = []
     let _properties = []
-
-    const result = getResponses(m)
 
     if (m.requestBody)
       Object.entries(m.requestBody.content).forEach(c => {
@@ -290,9 +288,7 @@ function getPathMethod(path) {
       requestBody: _getRequestBody(m.requestBody, typeRequest, reqContentType, required, _properties),
 
       // Response
-      responseType: result.type,
-      responses: result.responses
-
+      responses: getResponses(m)
     })
   })
   return methods
@@ -338,8 +334,6 @@ function _getProperties(props, req) {
   return properties
 }
 
-
-
 /**
  * Mapping responses
  * @param {*} list 
@@ -347,48 +341,27 @@ function _getProperties(props, req) {
  */
 function getResponses(list) {
   const responses = []
-  let type = ''
-  let _props = []
   let required = []
 
   if (list && list.responses)
     Object.entries(list.responses).forEach(r => {
-      const types = []
-      let responseType = ''
 
       let headersType = []
-
-
-     /*  if (r[1].content)
-        Object.entries(r[1].content).forEach(c => {
-
-          responseType = c[1].schema.xml ? c[1].schema.xml.name : ''
-
-          types.push(c[0])
-
-          required = c[1].schema.required
-
-          _props = c[1].schema.properties
-        }) */
 
       if (r[1].headers)
         Object.entries(r[1].headers).forEach(c => {
           headersType.push(c[0])
         })
 
-      if ('200' == r[0])
-        type = responseType
-
       responses.push({
         code: r[0],
         description: r[1].description ? r[1].description : '',
-        type: responseType,
-        contentType: r[1].content?_getResponseContentType(r[1].content):[],
+        content: r[1].content?_getResponseContentType(r[1].content):[],
         required: required,
         headers: headersType
       })
     })
-  return { responses: responses, type: type };
+  return responses ;
 }
 
 function _getResponseContentType(contentType){
@@ -409,8 +382,8 @@ function _getResponseContentType(contentType){
   })
 
   return {
-    name: name,
-    type: type,
+    contenType: name,
+    component: type,
     required: req,
     properties: _getProperties(_props, [])
   }

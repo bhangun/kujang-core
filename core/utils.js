@@ -224,6 +224,11 @@ function getPaths(api) {
   return paths
 }
 
+/**
+ * Split Parameter
+ * @param {*} path 
+ * @returns 
+ */
 function splitParam(path) {
   return path.replace('{', '${')
 }
@@ -237,37 +242,104 @@ function getPathMethod(path) {
 
   if (path) Object.entries(path).forEach(method => {
     const m = method[1];
-    const contentsRequest = []
+    const reqContentType = []
     let typeRequest = ''
     let required = []
-    let properties = []
+    let _properties = []
+
     const result = getResponses(m)
 
     if (m.requestBody)
       Object.entries(m.requestBody.content).forEach(c => {
+
+        /**  requestBody.content.<contentType> */
+        reqContentType.push(c[0])
+
+        /// requestBody.content.schema.xml
         typeRequest = c[1].schema.xml ? c[1].schema.xml.name : ''
+
+        /// requestBody.content.<contentType>.schema.required
         required = c[1].schema.required
-        contentsRequest.push(c[0])
+
+        /// requestBody.content.<contentType>.schema.properties
+        _properties = c[1].schema.properties ? c[1].schema.properties : []
       })
 
     methods.push({
+
+      /// paths.<path>.<method>
       method: method[0],
+
+      /// List parameter
       parameters: m.parameters,
+
+      /// paths.<path>.<method>.tags
       tags: m.tags,
+
+      /// paths.<path>.<method>.summary
       summary: m.summary,
+
+      /// paths.<path>.<method>.description
       description: m.description,
+
+      /// paths.<path>.<method>.operationId
       operationId: m.operationId,
 
-      requestBodyDesc: m.requestBody ? m.requestBody.description : '',
+      // Request Body -> Deprecated
+      /* requestBodyDesc: m.requestBody ? m.requestBody.description : '',
       requestBodyType: typeRequest,
       requestBodyRequired: required,
-      requestContentType: contentsRequest,
+      requestContentType: reqContentType, */
+
+      /// Request Body -> All included
+      /// requestBody.content
+      requestBody: _getRequestBody(m.requestBody, typeRequest, reqContentType, required, _properties),
+
+      // Response
       responseType: result.type,
       responses: result.responses
+
     })
   })
   return methods
 }
+
+
+/**
+ * Contain all RequestBody element
+ * @param {*} requestBody 
+ * @param {*} typeRequest 
+ * @param {*} reqContentType 
+ * @param {*} required 
+ * @param {*} props 
+ * @returns 
+ */
+function _getRequestBody(requestBody, typeRequest, reqContentType, required, props) {
+    return {
+      required: required,
+      component: typeRequest,
+      description: requestBody?requestBody.description:'',
+      contentType: reqContentType,
+      propertiesType: '',
+      properties: _getProperties(props, required)
+    }
+}
+
+/**
+ * 
+ * @param {*} props 
+ * @param {*} req 
+ * @returns 
+ */
+function _getProperties(props, req) {
+  const properties = []
+  if (props) Object.entries(props).forEach(el => {
+    properties.push({ name: el[0], required: req?req.includes(el[0]):false })
+  })
+  return properties
+}
+
+
 
 /**
  * Mapping responses

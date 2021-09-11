@@ -283,7 +283,7 @@ function getPathMethod(path) {
       description: m.description,
 
       /// paths.<path>.<method>.operationId
-      operationId: m.operationId,
+      operationId: _.camelCase(m.operationId),
 
       /// Request Body -> All included
       /// requestBody.content
@@ -314,7 +314,6 @@ function _getRequestBody(requestBody, typeRequest, reqContentType, required, pro
       component: typeRequest,
       description: requestBody?requestBody.description:'',
       contentType: reqContentType,
-      propertiesType: '',
       properties: _getProperties(props, required)
     }
 }
@@ -328,7 +327,13 @@ function _getRequestBody(requestBody, typeRequest, reqContentType, required, pro
 function _getProperties(props, req) {
   const properties = []
   if (props) Object.entries(props).forEach(el => {
-    properties.push({ name: el[0], required: req?req.includes(el[0]):false })
+    properties.push({ 
+      name: el[0], 
+      type: el[1].type,
+      enum: el[1].enum? _.join(el[1].enum, ',') : '',
+      format: el[1].format? el[1].format:'',  
+      example: el[1].example? el[1].example:'', 
+      required: req?req.includes(el[0]):false })
   })
   return properties
 }
@@ -343,6 +348,9 @@ function _getProperties(props, req) {
 function getResponses(list) {
   const responses = []
   let type = ''
+  let _props = []
+  let required = []
+
   if (list && list.responses)
     Object.entries(list.responses).forEach(r => {
       const types = []
@@ -350,11 +358,18 @@ function getResponses(list) {
 
       let headersType = []
 
-      if (r[1].content)
+
+     /*  if (r[1].content)
         Object.entries(r[1].content).forEach(c => {
+
           responseType = c[1].schema.xml ? c[1].schema.xml.name : ''
+
           types.push(c[0])
-        })
+
+          required = c[1].schema.required
+
+          _props = c[1].schema.properties
+        }) */
 
       if (r[1].headers)
         Object.entries(r[1].headers).forEach(c => {
@@ -365,14 +380,40 @@ function getResponses(list) {
         type = responseType
 
       responses.push({
-        responseCode: r[0],
-        responseDesc: r[1].description ? r[1].description : '',
-        responseType: responseType,
-        responseContentType: types,
-        responseHeaders: headersType
+        code: r[0],
+        description: r[1].description ? r[1].description : '',
+        type: responseType,
+        contentType: r[1].content?_getResponseContentType(r[1].content):[],
+        required: required,
+        headers: headersType
       })
     })
   return { responses: responses, type: type };
+}
+
+function _getResponseContentType(contentType){
+  let name = ''
+  let _props = []
+  let type = ''
+  let req = []
+  if (contentType) Object.entries(contentType).forEach(c => {
+
+    type = c[1].schema.xml ? c[1].schema.xml.name : ''
+
+    name = c[0]
+
+    req = c[1].schema.required
+
+    _props = c[1].schema.properties
+
+  })
+
+  return {
+    name: name,
+    type: type,
+    required: req,
+    properties: _getProperties(_props, [])
+  }
 }
 
 /**

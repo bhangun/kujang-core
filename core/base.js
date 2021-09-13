@@ -264,7 +264,26 @@ module.exports = class extends Generator {
     return chalk.bold.redBright(text)
   }
 
+  /**
+   * transformType
+   * @param {*} type 
+   * @param {*} isEnum 
+   * @returns 
+   */
   transformType(type, isEnum){
     return utils.transformType(type, isEnum)
+  }
+
+  /**
+   * propsForService
+   * @param {*} paths 
+   * @returns 
+   */
+  propsForService(paths){
+    return utils.propsForServices(paths)
+  }
+
+  otherEntity(paths){
+    return utils.otherEntity(paths)
   }
 }

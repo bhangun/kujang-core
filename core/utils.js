@@ -8,7 +8,9 @@ module.exports = {
   mappingFields,
   getPaths,
   getPathMethod,
-  transformType
+  transformType,
+  propsForServices,
+  otherEntity
 };
 
 /**
@@ -435,4 +437,199 @@ function transformApi(appsName, path, callback) {
       callback(mappingProps(api, appsName), api)
     }
   })
+}
+
+function propsForServices(paths){
+  const methods = []
+  for (const i in paths) { 
+    for (const m in paths[i].methods) { 
+      const path = paths[i].path?paths[i].path:''; 
+      const methodName = paths[i].methods[m].operationId?paths[i].methods[m].operationId:'';
+      const summary = paths[i].methods[m].summary?paths[i].methods[m].summary:'';
+      const methodPath = validatePath(paths[i].methods[m].method);
+      const desc = paths[i].methods[m].description?paths[i].methods[m].description:''; 
+    
+
+      // RESPONSE
+      const responses = paths[i].methods[m].responses;
+      const code200 = responses.find(e=> e.code == '200')
+      const responseContent = code200? code200 : {}
+
+      let responseType = 'void'
+
+      if(responseContent.content) {
+        if(responseContent.content.component)
+          responseType= responseContent.content.component
+        else if (responseContent.content.items)
+          responseType = _.capitalize(responseContent.content.items.type+''+i )
+      } else responseType = 'Object'+i
+
+
+      // PARAMETER
+      const param =  putParam(paths[i].methods[m], responseType);
+      const parameters = param.param;
+      const query = param.query;
+
+      const isInput = responseType? true:false;
+      
+
+      let payload = '';
+      let payloadStatement = '';
+      if(methodPath == 'post' || methodPath == 'update'){
+        payload = ', '+ param.payload;
+        payloadStatement = param.payloadStatement;
+      }
+
+      methods.push({
+        path: path,
+        methodName: methodName,
+        methodPath: methodPath,
+        summary: summary,
+        desc: desc,
+        responseType: responseType,
+        parameters: parameters,
+        query: query,
+        isInput: isInput,
+        requestPayload: payload,
+        requestPayloadStatement: payloadStatement
+      })
+    }
+  }
+  return methods
+}
+
+
+function putParam(input, resType){
+  let result = '';
+  let param = {}
+  let isProp = false
+  let onlyParam = ''
+  let query = ''
+  let payloadStatement = 'const '+resType.toLowerCase() +' = '+ resType+'(';
+
+  if(input.parameters)
+    param = input.parameters
+  else {
+    param = input.requestBody.properties;
+    isProp = true
+  }
+
+
+  if(param){
+    
+    let req = ''
+    let n = param.length
+    let comma =''
+    let and = '';
+    let q = 0;
+
+    if(param.required)
+      req = '@required '
+
+    for(const p in param){
+      result += comma + req + (isProp?param[p].dartType.type : param[p].schema.type) +'? '+param[p].name ;
+
+      onlyParam += comma + param[p].name+': '+ param[p].name ;
+
+      if(q > 0)
+        and='%26'
+
+      if(param[p].in == 'query'){
+        query += and + param[p].name + '=${'+ param[p].name + '}'
+        q++;
+      }
+      n--;
+
+      if(n>0)
+        comma =', '
+    }
+  }
+
+  // add parameter if there is payload
+  if(resType !== 'void'){
+    payloadStatement += onlyParam + ');'
+  }
+
+  if(query)
+    query = '?'+query
+
+  return {param: result, query: query, payload: resType.toLowerCase(), payloadStatement: payloadStatement};
+}
+
+
+function validatePath(m){
+  let method = m;
+  if(m == 'put')
+    method = 'update';
+  else if (m == 'get')
+    method = 'fetch';
+
+  return method;
+}
+
+
+function otherEntity(paths) {
+  const responseTypes = [];
+  for (const i in paths) {
+      for (const m in paths[i].methods) {
+          let responseType = ''
+          // RESPONSE
+          const responses = paths[i].methods[m].responses;
+          const code200 = responses.find(e => e.code == '200')
+          const responseContent = code200 ? code200 : {}
+
+          if (responseContent.content.component)
+              responseType = responseContent.content.component
+          else if (responseContent.content.items.type)
+              responseType = _.capitalize(responseContent.content.items.type + '' + i)
+          else responseType = 'Object' + i
+
+          responseTypes.push(
+              {
+                  "appsName": responseType,
+                  "pkType": "String",
+                  "relationships": [],
+                  "entityName": _.capitalize(responseType),
+                  "entityClass": _.capitalize(responseType),
+                  "entityInstance": responseType,
+                  "entityFolderName": responseType,
+                  "entityFileName": responseType,
+                  "enableTranslation": false,
+                  "fields": otherFields(paths[i].methods[m])
+              }
+          )
+      }
+  }
+  return responseTypes
+}
+
+function otherFields(input) {
+  let param = {}
+  const fields = []
+  let isProp = false
+
+  if (input.parameters)
+      param = input.parameters
+  else {
+      param = input.requestBody.properties;
+      isProp = true
+  }
+
+  for(const p in param){
+      fields.push(
+          {
+              "fieldType": transformType(isProp?param[p].dartType : param[p].schema.type,false),
+              "fieldName": param[p].name,
+              "fieldIsEnum": false,
+              "fieldValues": "",
+              "fieldsContainOneToMany": false,
+              "fieldsContainOwnerManyToMany": false,
+              "fieldsContainOwnerOneToOne": false,
+              "fieldsContainNoOwnerOneToOne": false,
+              "fieldsContainManyToOne": false
+          }
+      )
+  }
+
+  return fields
 }

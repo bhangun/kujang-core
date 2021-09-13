@@ -149,58 +149,58 @@ function transformType(type, isEnum) {
   newType.origin = type.type ? type.type : ''
   newType.example = type.example ? type.example : ''
   newType.description = type.description ? type.description : ''
-  newType.type= 'String'
+  newType.type = 'String'
   newType.typeDesc = ''
 
   switch (type.type) {
     case 'integer':
       if (type.format == 'int64')
-        newType.type= 'double'
+        newType.type = 'double'
       else if (type.format == 'int32')
-        newType.type= 'int'
+        newType.type = 'int'
       break;
     case 'number':
       if (type.format == 'float')
-        newType.type= 'Float'
+        newType.type = 'Float'
       else if (type.format == 'double')
-        newType.type= 'double'
+        newType.type = 'double'
       break;
     case 'string':
       switch (type.format) {
         case 'byte':
-          newType.type= 'ByteData'
+          newType.type = 'ByteData'
           break;
         case 'binary':
-          newType.type= 'BinaryCodec'
+          newType.type = 'BinaryCodec'
           break;
         case 'date':
-          newType.type= 'DateTime'
+          newType.type = 'DateTime'
           break;
         case 'date-time':
-          newType.type= 'DateTime'
+          newType.type = 'DateTime'
           break;
         case 'password':
         default:
-          newType.type= 'String'
+          newType.type = 'String'
           break;
       }
       break;
     case (type.type == 'Instant'):
-      newType.type= 'int'
+      newType.type = 'int'
       newType.typeDesc = '.toIso8601String()' + 'Z'
       break
     case 'array':
-      newType.type= 'List<String>'
+      newType.type = 'List<String>'
       break;
     case 'uuid':
-      newType.type= 'String'
+      newType.type = 'String'
       break;
     case 'object':
-      newType.type= type.xml ? _.capitalize(type.xml.name) : ''
+      newType.type = type.xml ? _.capitalize(type.xml.name) : ''
       break;
   }
 
-  if (isEnum) newType.type= 'String'
+  if (isEnum) newType.type = 'String'
 
   return newType
 }
@@ -307,13 +307,13 @@ function getPathMethod(path) {
  * @returns 
  */
 function _getRequestBody(requestBody, typeRequest, reqContentType, required, props) {
-    return {
-      required: required,
-      component: _.capitalize(typeRequest),
-      description: requestBody?requestBody.description:'',
-      contentType: reqContentType,
-      properties: _getProperties(props, required)
-    }
+  return {
+    required: required,
+    component: _.capitalize(typeRequest),
+    description: requestBody ? requestBody.description : '',
+    contentType: reqContentType,
+    properties: _getProperties(props, required)
+  }
 }
 
 /**
@@ -325,19 +325,20 @@ function _getRequestBody(requestBody, typeRequest, reqContentType, required, pro
 function _getProperties(props, req) {
   const properties = []
   if (props) Object.entries(props).forEach(el => {
-    const format = el[1].format?el[1].format:''
-    const type = el[1].type?el[1].type:''
+    const format = el[1].format ? el[1].format : ''
+    const type = el[1].type ? el[1].type : ''
     const enumm = el[1].enum
-    const isEnum = el[1].enum?true:false
+    const isEnum = el[1].enum ? true : false
 
-    properties.push({ 
-      name: el[0], 
-      dartType: transformType({type: type, format:format, isEnum: isEnum }),
+    properties.push({
+      name: el[0],
+      dartType: transformType({ type: type, format: format, isEnum: isEnum }),
       type: type,
-      enum: enumm? _.join(enumm, ',') : '',
-      format: format,  
-      example: el[1].example? el[1].example:'', 
-      required: req?req.includes(el[0]):false })
+      enum: enumm ? _.join(enumm, ',') : '',
+      format: format,
+      example: el[1].example ? el[1].example : '',
+      required: req ? req.includes(el[0]) : false
+    })
   })
   return properties
 }
@@ -369,7 +370,7 @@ function getResponses(list) {
         description: r[1].description ? r[1].description : '',
 
         /// responses.<responseCode>.content
-        content: r[1].content?_getResponseContentType(r[1].content):[],
+        content: r[1].content ? _getResponseContentType(r[1].content) : [],
 
         /// responses.<responseCode>.content
         //required: required,
@@ -377,7 +378,7 @@ function getResponses(list) {
         headers: headersType
       })
     })
-  return responses ;
+  return responses;
 }
 
 /**
@@ -385,7 +386,7 @@ function getResponses(list) {
  * @param {*} contentType 
  * @returns 
  */
-function _getResponseContentType(contentType){
+function _getResponseContentType(contentType) {
   let contenType = ''
   let _props = []
   let type = ''
@@ -407,9 +408,9 @@ function _getResponseContentType(contentType){
     _props = c[1].schema.properties
 
     /// responses.<responseCode>.content.schema.items
-    _items.type = c[1].schema.items?c[1].schema.items.type:''
+    _items.type = c[1].schema.items ? c[1].schema.items.type : ''
 
-    _items.properties = c[1].schema.items?_getProperties(c[1].schema.items.properties, []):[]
+    _items.properties = c[1].schema.items ? _getProperties(c[1].schema.items.properties, []) : []
   })
 
   return {
@@ -439,45 +440,47 @@ function transformApi(appsName, path, callback) {
   })
 }
 
-function propsForServices(paths){
+function propsForServices(paths) {
   const methods = []
-  for (const i in paths) { 
-    for (const m in paths[i].methods) { 
-      const path = paths[i].path?paths[i].path:''; 
-      const methodName = paths[i].methods[m].operationId?paths[i].methods[m].operationId:'';
-      const summary = paths[i].methods[m].summary?paths[i].methods[m].summary:'';
+  for (const i in paths) {
+    for (const m in paths[i].methods) {
+      const path = paths[i].path ? paths[i].path : '';
+      const methodName = paths[i].methods[m].operationId ? paths[i].methods[m].operationId : '';
+      const summary = paths[i].methods[m].summary ? paths[i].methods[m].summary : '';
       const methodPath = validatePath(paths[i].methods[m].method);
-      const desc = paths[i].methods[m].description?paths[i].methods[m].description:''; 
-    
+      const desc = paths[i].methods[m].description ? paths[i].methods[m].description : '';
+
 
       // RESPONSE
       const responses = paths[i].methods[m].responses;
-      const code200 = responses.find(e=> e.code == '200')
-      const responseContent = code200? code200 : {}
+      const code200 = responses.find(e => e.code == '200')
+      const responseContent = code200 ? code200 : {}
 
       let responseType = 'void'
 
-      if(responseContent.content) {
-        if(responseContent.content.component)
-          responseType= responseContent.content.component
+      if (responseContent.content) {
+        if (responseContent.content.component)
+          responseType = responseContent.content.component
         else if (responseContent.content.items)
-          responseType = _.capitalize(responseContent.content.items.type+''+i )
-      } else responseType = 'Object'+i
+          responseType = _.capitalize(responseContent.content.items.type + '' + i)
+      } else responseType = 'Object' + i
 
 
       // PARAMETER
-      const param =  putParam(paths[i].methods[m], responseType);
+      const param = putParam(paths[i].methods[m], responseType);
       const parameters = param.param;
       const query = param.query;
 
-      const isInput = responseType? true:false;
-      
+      const isInput = responseType ? true : false;
+
 
       let payload = '';
       let payloadStatement = '';
-      if(methodPath == 'post' || methodPath == 'update'){
-        payload = ', '+ param.payload;
+      let onlyParam = ''
+      if (methodPath == 'post' || methodPath == 'update') {
+        payload = ', ' + param.payload;
         payloadStatement = param.payloadStatement;
+        onlyParam = param.onlyParam
       }
 
       methods.push({
@@ -491,7 +494,8 @@ function propsForServices(paths){
         query: query,
         isInput: isInput,
         requestPayload: payload,
-        requestPayloadStatement: payloadStatement
+        requestPayloadStatement: payloadStatement,
+        onlyParam: onlyParam
       })
     }
   }
@@ -499,15 +503,15 @@ function propsForServices(paths){
 }
 
 
-function putParam(input, resType){
+function putParam(input, resType) {
   let result = '';
   let param = {}
   let isProp = false
   let onlyParam = ''
   let query = ''
-  let payloadStatement = 'const '+resType.toLowerCase() +' = '+ resType+'(';
+  let payloadStatement = 'const ' + resType.toLowerCase() + ' = ' + resType + '(';
 
-  if(input.parameters)
+  if (input.parameters)
     param = input.parameters
   else {
     param = input.requestBody.properties;
@@ -515,51 +519,57 @@ function putParam(input, resType){
   }
 
 
-  if(param){
-    
+  if (param) {
+
     let req = ''
     let n = param.length
-    let comma =''
+    let comma = ''
     let and = '';
     let q = 0;
 
-    if(param.required)
+    if (param.required)
       req = '@required '
 
-    for(const p in param){
-      result += comma + req + (isProp?param[p].dartType.type : param[p].schema.type) +'? '+param[p].name ;
+    for (const p in param) {
+      result += comma + req + (isProp ? param[p].dartType.type : param[p].schema.type) + '? ' + param[p].name;
 
-      onlyParam += comma + param[p].name+': '+ param[p].name ;
+      onlyParam += comma + param[p].name + ': ' + param[p].name;
 
-      if(q > 0)
-        and='%26'
+      if (q > 0)
+        and = '%26'
 
-      if(param[p].in == 'query'){
-        query += and + param[p].name + '=${'+ param[p].name + '}'
+      if (param[p].in == 'query') {
+        query += and + param[p].name + '=${' + param[p].name + '}'
         q++;
       }
       n--;
 
-      if(n>0)
-        comma =', '
+      if (n > 0)
+        comma = ', '
     }
   }
 
   // add parameter if there is payload
-  if(resType !== 'void'){
+  if (resType !== 'void') {
     payloadStatement += onlyParam + ');'
   }
 
-  if(query)
-    query = '?'+query
+  if (query)
+    query = '?' + query
 
-  return {param: result, query: query, payload: resType.toLowerCase(), payloadStatement: payloadStatement};
+  return { 
+    param: result, 
+    query: query, 
+    payload: resType.toLowerCase(), 
+    payloadStatement: payloadStatement,
+    onlyParam : onlyParam
+  };
 }
 
 
-function validatePath(m){
+function validatePath(m) {
   let method = m;
-  if(m == 'put')
+  if (m == 'put')
     method = 'update';
   else if (m == 'get')
     method = 'fetch';
@@ -571,34 +581,34 @@ function validatePath(m){
 function otherEntity(paths) {
   const responseTypes = [];
   for (const i in paths) {
-      for (const m in paths[i].methods) {
-          let responseType = ''
-          // RESPONSE
-          const responses = paths[i].methods[m].responses;
-          const code200 = responses.find(e => e.code == '200')
-          const responseContent = code200 ? code200 : {}
+    for (const m in paths[i].methods) {
+      let responseType = ''
+      // RESPONSE
+      const responses = paths[i].methods[m].responses;
+      const code200 = responses.find(e => e.code == '200')
+      const responseContent = code200 ? code200 : {}
 
-          if (responseContent.content.component)
-              responseType = responseContent.content.component
-          else if (responseContent.content.items.type)
-              responseType = _.capitalize(responseContent.content.items.type + '' + i)
-          else responseType = 'Object' + i
+      if (responseContent.content.component)
+        responseType = responseContent.content.component
+      else if (responseContent.content.items.type)
+        responseType = _.capitalize(responseContent.content.items.type + '' + i)
+      else responseType = 'Object' + i
 
-          responseTypes.push(
-              {
-                  "appsName": responseType,
-                  "pkType": "String",
-                  "relationships": [],
-                  "entityName": _.capitalize(responseType),
-                  "entityClass": _.capitalize(responseType),
-                  "entityInstance": responseType,
-                  "entityFolderName": responseType,
-                  "entityFileName": responseType,
-                  "enableTranslation": false,
-                  "fields": otherFields(paths[i].methods[m])
-              }
-          )
-      }
+      responseTypes.push(
+        {
+          "appsName": responseType,
+          "pkType": "String",
+          "relationships": [],
+          "entityName": _.capitalize(responseType),
+          "entityClass": _.capitalize(responseType),
+          "entityInstance": responseType,
+          "entityFolderName": responseType,
+          "entityFileName": responseType,
+          "enableTranslation": false,
+          "fields": otherFields(paths[i].methods[m])
+        }
+      )
+    }
   }
   return responseTypes
 }
@@ -609,26 +619,26 @@ function otherFields(input) {
   let isProp = false
 
   if (input.parameters)
-      param = input.parameters
+    param = input.parameters
   else {
-      param = input.requestBody.properties;
-      isProp = true
+    param = input.requestBody.properties;
+    isProp = true
   }
 
-  for(const p in param){
-      fields.push(
-          {
-              "fieldType": transformType(isProp?param[p].dartType : param[p].schema.type,false),
-              "fieldName": param[p].name,
-              "fieldIsEnum": false,
-              "fieldValues": "",
-              "fieldsContainOneToMany": false,
-              "fieldsContainOwnerManyToMany": false,
-              "fieldsContainOwnerOneToOne": false,
-              "fieldsContainNoOwnerOneToOne": false,
-              "fieldsContainManyToOne": false
-          }
-      )
+  for (const p in param) {
+    fields.push(
+      {
+        "fieldType": transformType(isProp ? param[p].dartType : param[p].schema.type, false),
+        "fieldName": param[p].name,
+        "fieldIsEnum": false,
+        "fieldValues": "",
+        "fieldsContainOneToMany": false,
+        "fieldsContainOwnerManyToMany": false,
+        "fieldsContainOwnerOneToOne": false,
+        "fieldsContainNoOwnerOneToOne": false,
+        "fieldsContainManyToOne": false
+      }
+    )
   }
 
   return fields

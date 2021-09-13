@@ -7,7 +7,8 @@ module.exports = {
   mappingEntities,
   mappingFields,
   getPaths,
-  getPathMethod
+  getPathMethod,
+  transformType
 };
 
 /**
@@ -146,58 +147,58 @@ function transformType(type, isEnum) {
   newType.origin = type.type ? type.type : ''
   newType.example = type.example ? type.example : ''
   newType.description = type.description ? type.description : ''
-  newType.dart = ''
-  newType.dartDesc = ''
+  newType.type= 'String'
+  newType.typeDesc = ''
 
   switch (type.type) {
     case 'integer':
       if (type.format == 'int64')
-        newType.dart = 'double'
+        newType.type= 'double'
       else if (type.format == 'int32')
-        newType.dart = 'int'
+        newType.type= 'int'
       break;
     case 'number':
       if (type.format == 'float')
-        newType.dart = 'Float'
+        newType.type= 'Float'
       else if (type.format == 'double')
-        newType.dart = 'double'
+        newType.type= 'double'
       break;
     case 'string':
       switch (type.format) {
         case 'byte':
-          newType.dart = 'ByteData'
+          newType.type= 'ByteData'
           break;
         case 'binary':
-          newType.dart = 'BinaryCodec'
+          newType.type= 'BinaryCodec'
           break;
         case 'date':
-          newType.dart = 'DateTime'
+          newType.type= 'DateTime'
           break;
         case 'date-time':
-          newType.dart = 'DateTime'
+          newType.type= 'DateTime'
           break;
         case 'password':
         default:
-          newType.dart = 'String'
+          newType.type= 'String'
           break;
       }
       break;
     case (type.type == 'Instant'):
-      newType.dart = 'int'
-      newType.dartDesc = '.toIso8601String()' + 'Z'
+      newType.type= 'int'
+      newType.typeDesc = '.toIso8601String()' + 'Z'
       break
     case 'array':
-      newType.dart = 'List<String>'
+      newType.type= 'List<String>'
       break;
     case 'uuid':
-      newType.dart = 'String'
+      newType.type= 'String'
       break;
     case 'object':
-      newType.dart = type.xml ? _.capitalize(type.xml.name) : ''
+      newType.type= type.xml ? _.capitalize(type.xml.name) : ''
       break;
   }
 
-  if (isEnum) newType.dart = 'String'
+  if (isEnum) newType.type= 'String'
 
   return newType
 }
@@ -306,7 +307,7 @@ function getPathMethod(path) {
 function _getRequestBody(requestBody, typeRequest, reqContentType, required, props) {
     return {
       required: required,
-      component: typeRequest,
+      component: _.capitalize(typeRequest),
       description: requestBody?requestBody.description:'',
       contentType: reqContentType,
       properties: _getProperties(props, required)
@@ -346,7 +347,7 @@ function _getProperties(props, req) {
  */
 function getResponses(list) {
   const responses = []
-  let required = []
+  //let required = []
 
   if (list && list.responses)
     Object.entries(list.responses).forEach(r => {
@@ -359,10 +360,18 @@ function getResponses(list) {
         })
 
       responses.push({
+        /// responses.<responseCode>
         code: r[0],
+
+        /// responses.<responseCode>.description
         description: r[1].description ? r[1].description : '',
+
+        /// responses.<responseCode>.content
         content: r[1].content?_getResponseContentType(r[1].content):[],
-        required: required,
+
+        /// responses.<responseCode>.content
+        //required: required,
+
         headers: headersType
       })
     })
@@ -375,27 +384,38 @@ function getResponses(list) {
  * @returns 
  */
 function _getResponseContentType(contentType){
-  let name = ''
+  let contenType = ''
   let _props = []
   let type = ''
   let req = []
+  let _items = {}
+
   if (contentType) Object.entries(contentType).forEach(c => {
 
+    /// responses.<responseCode>.content.<contenType>
+    contenType = c[0]
+
+    /// responses.<responseCode>.content.schema.xml.name
     type = c[1].schema.xml ? c[1].schema.xml.name : ''
 
-    name = c[0]
-
+    /// responses.<responseCode>.content.schema.required
     req = c[1].schema.required
 
+    /// responses.<responseCode>.content.schema.properties
     _props = c[1].schema.properties
 
+    /// responses.<responseCode>.content.schema.items
+    _items.type = c[1].schema.items?c[1].schema.items.type:''
+
+    _items.properties = c[1].schema.items?_getProperties(c[1].schema.items.properties, []):[]
   })
 
   return {
-    contenType: name,
-    component: type,
+    contenType: contenType,
+    component: _.capitalize(type),
     required: req,
-    properties: _getProperties(_props, [])
+    properties: _getProperties(_props, []),
+    items: _items
   }
 }
 

@@ -263,4 +263,8 @@ module.exports = class extends Generator {
   chalkRedBright(text) {
     return chalk.bold.redBright(text)
   }
+
+  transformType(type, isEnum){
+    return utils.transformType(type, isEnum)
+  }
 }

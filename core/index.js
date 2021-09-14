@@ -32,7 +32,7 @@ module.exports = class extends Generator {
     this._ = _;
   }
 
-  initializing(packagejs) {
+  initializing(obj, props, packagejs) {
 
     const version = chalk.yellow(`${packagejs.version}`)
 
@@ -53,11 +53,13 @@ module.exports = class extends Generator {
     this.log(`${chalk.bold.redBright('        ░░███')}`);
     this.log(`${chalk.bold.red('         ▀▀▀▀')}`);
 
+    this.promptOas(obj, props)
   }
 
-  /**
-* Override yeoman generator's usage function to fine tune --help message.
-*/
+  promptOas(obj,props) {
+    this.composeWith(require.resolve('./oas'), {obj:obj, props:props});
+  }
+
   usage() {
     return super.usage().replace('yo kujang:', 'kujang ');
   }
@@ -226,6 +228,14 @@ module.exports = class extends Generator {
     this.fs.writeJSON(_path + '/.origin.json', contents)
   }
 
+  /**
+   * Transform API
+   * @param {*} obj 
+   * @param {*} appsName 
+   * @param {*} path_api 
+   * @param {*} isOriginWrite 
+   * @param {*} callback 
+   */
   transformApi(appsName, path_api, callback) {
     utils.transformApi(appsName, path_api, (api, origin) => {
       callback(api, origin)
@@ -288,7 +298,7 @@ module.exports = class extends Generator {
    * @param {*} isEnum 
    * @returns 
    */
-  transformType(type, isEnum){
+  transformType(type, isEnum) {
     return utils.transformType(type, isEnum)
   }
 
@@ -297,11 +307,11 @@ module.exports = class extends Generator {
    * @param {*} paths 
    * @returns 
    */
-  propsForService(paths){
+  propsForService(paths) {
     return utils.propsForServices(paths)
   }
 
-  otherEntity(paths){
+  otherEntity(paths) {
     return utils.otherEntity(paths)
   }
 }

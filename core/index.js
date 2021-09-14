@@ -28,9 +28,18 @@ module.exports = class extends Generator {
   constructor(args, opts, features) {
     // Calling the super constructor is important so our generator is correctly set up
     super(args, opts, features);
+
+    this.option("plugins", { type: String, required: false });
+    this.option("print_origin", { type: Boolean, required: false });
+
     // expose lodash to templates
     this._ = _;
+   
   }
+
+/*   usage() {
+    return super.usage().replace('yo kujang:', 'kujang ');
+  } */
 
   initializing(obj, props, packagejs) {
 
@@ -56,12 +65,10 @@ module.exports = class extends Generator {
     this.promptOas(obj, props)
   }
 
-  promptOas(obj,props) {
+  promptOas(obj, props) {
+    props.plugins = this.options.plugins
+    props.isPrintOrigin = this.options.print_origin
     this.composeWith(require.resolve('./oas'), {obj:obj, props:props});
-  }
-
-  usage() {
-    return super.usage().replace('yo kujang:', 'kujang ');
   }
 
   /**

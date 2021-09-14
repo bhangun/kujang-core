@@ -22,9 +22,10 @@ module.exports = class extends GenBase {
 
     constructor(args, opts) {
         super(args, opts);
-       
         this.props = opts.props
         this.obj = opts.obj
+        this.isOriginWrite = opts.obj?opts.obj:false
+        this.plugins = opts.args?opts.args.plugins:''
     }
 
     prompting() {
@@ -51,17 +52,21 @@ module.exports = class extends GenBase {
         this.prompt(prompts).then((props) => {
             this.transformApi(props.appsName, props.path_api, (api, origin)=>{
                 this.obj.props = api
-
                 this.obj.props.api_source = props.path_api
                 this.obj.writeKujangJson(props.appsName, api)
 
-                if (this.props.isOriginWrite) this.writeOriginJson(appsName, origin)
+                if (this.isOriginWrite) this.writeOriginJson(appsName, origin)
                 done();
             })
         });
        
-        if(this.props.plugins)
+    }
+
+    plugin(){
+        this.log(this.obj.props)
+        this.log(this.plugins)
+
+        if(this.plugins)
             this.composeWith(require.resolve(this.plugins), this.obj.props);
     }
-    
 }

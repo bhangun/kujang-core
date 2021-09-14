@@ -214,7 +214,8 @@ function transformType(type, isEnum) {
 function getPaths(api) {
   const paths = []
   if (api) Object.entries(api.paths).forEach(path => {
-    const param = splitParam(path[0])
+    let param = ''
+    param = path[0]?splitParam(path[0]):''
     const hasParam = path[0].split('{').length > 1
     paths.push({
       pathOrigin: path[0],

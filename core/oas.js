@@ -24,6 +24,7 @@ module.exports = class extends GenBase {
         super(args, opts);
        
         this.props = opts.props
+        this.props.modules = opts.props.modules
         this.obj = opts.obj
     }
 
@@ -53,6 +54,9 @@ module.exports = class extends GenBase {
                 this.obj.props = api
 
                 this.obj.props.api_source = props.path_api
+
+                this.obj.props.modules = this.props.modules
+
                 this.obj.writeKujangJson(props.appsName, api)
 
                 if (this.props.isOriginWrite) this.writeOriginJson(appsName, origin)
@@ -60,8 +64,8 @@ module.exports = class extends GenBase {
             })
         });
        
-        if(this.props.plugins)
-            this.composeWith(require.resolve(this.plugins), this.obj.props);
+        if(this.props.modules)
+            this.composeWith(require.resolve(this.props.modules), this.obj.props);
     }
     
 }

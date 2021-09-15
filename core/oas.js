@@ -42,7 +42,7 @@ module.exports = class extends GenBase {
             {
                 type: 'input',
                 name: 'path_api',
-                message: `URL/Path to your OAS?${this.chalkYellowBright('(json/yaml/yml)')}`,
+                message: `URL/Path to your OAS? ${this.chalkYellowBright('(json/yaml/yml)')}`,
                 validate: input => (/^((https?|chrome|file):\/\/[^\s$.?#].[^\s]*)|([A-z0-9-_+/:]+.(json|yaml|yml))$/.test(input) ? true : 'Something wrong with your URL or Path, please change!'),
                 store: true
             },
@@ -59,13 +59,18 @@ module.exports = class extends GenBase {
 
                 this.obj.writeKujangJson(props.appsName, api)
 
-                if (this.props.isOriginWrite) this.writeOriginJson(appsName, origin)
+                if (this.props.isOriginWrite) this.obj.writeOriginJson(appsName, origin)
+
+                if(this.props.modules)
+                    this.composeWith(require.resolve(this.props.modules), this.obj.props);
                 done();
             })
         });
+
+       /*  console.log(this.obj.props)
        
         if(this.props.modules)
-            this.composeWith(require.resolve(this.props.modules), this.obj.props);
+            this.composeWith(require.resolve(this.props.modules), this.obj.props); */
     }
     
 }

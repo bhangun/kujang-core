@@ -28,7 +28,9 @@ module.exports = {
   getPathMethod,
   transformType,
   propsForServices,
-  otherEntity
+  otherEntity,
+  uniqProperties,
+  findEqualObject
 };
 
 /**
@@ -38,17 +40,24 @@ module.exports = {
  * @returns api element
  */
 function mappingProps(api, appsName) {
-  return {
+  const _props = []
+  const entities = mappingEntities(appsName, api)
+  const schema =  {
     appsName: appsName,
     baseName: appsName,
     packageFolder: appsName,
     info: api.info,
-    entities: mappingEntities(appsName, api),
-    paths: getPaths(api),
     servers: api.servers,
     securitySchemes: api.components ? getSecurity(api.components.securitySchemes) : {},
-    tags: api.tags
+    tags: api.tags,
+    paths: getPaths(api, _props),
   }
+
+  const uniqprop =  uniqProperties(_props)
+  schema.entities = entities? entities:[]
+  schema.properties = uniqprop? uniqprop :[]
+
+  return schema
 }
 
 /**
@@ -157,88 +166,20 @@ function mappingFields(obj, entities) {
 }
 
 /**
- * Sanitize / convert type
- * @param {*} field 
- * @param {*} entities 
- * @returns 
- */
-function transformType(type, isEnum) {
-  let newType = {}
-  newType.origin = type.type ? type.type : ''
-  newType.example = type.example ? type.example : ''
-  newType.description = type.description ? type.description : ''
-  newType.type = 'String'
-  newType.typeDesc = ''
-
-  switch (type.type) {
-    case 'integer':
-      if (type.format == 'int64')
-        newType.type = 'double'
-      else if (type.format == 'int32')
-        newType.type = 'int'
-      break;
-    case 'number':
-      if (type.format == 'float')
-        newType.type = 'Float'
-      else if (type.format == 'double')
-        newType.type = 'double'
-      break;
-    case 'string':
-      switch (type.format) {
-        case 'byte':
-          newType.type = 'ByteData'
-          break;
-        case 'binary':
-          newType.type = 'BinaryCodec'
-          break;
-        case 'date':
-          newType.type = 'DateTime'
-          break;
-        case 'date-time':
-          newType.type = 'DateTime'
-          break;
-        case 'password':
-        default:
-          newType.type = 'String'
-          break;
-      }
-      break;
-    case (type.type == 'Instant'):
-      newType.type = 'int'
-      newType.typeDesc = '.toIso8601String()' + 'Z'
-      break
-    case 'array':
-      newType.type = 'List<String>'
-      break;
-    case 'uuid':
-      newType.type = 'String'
-      break;
-    case 'object':
-      newType.type = type.xml ? _.capitalize(type.xml.name) : ''
-      break;
-  }
-
-  if (isEnum) newType.type = 'String'
-
-  return newType
-}
-
-
-/**
  * Mapping path to be use as services
  * @param {*} api Api root
  */
-function getPaths(api) {
+function getPaths(api, props) {
   const paths = []
   if (api) Object.entries(api.paths).forEach(path => {
     let param = ''
-    param = path[0]?splitParam(path[0]):''
+    param = path[0] ? splitParam(path[0]) : ''
     const hasParam = path[0].split('{').length > 1
     paths.push({
       pathOrigin: path[0],
       path: param,
       hasParam: hasParam,
-      methods: getPathMethod(path[1])
+      methods: getPathMethod(path[1], props)
     })
   })
   return paths
@@ -255,9 +196,9 @@ function splitParam(path) {
 
 /**
  * Get Path method
- * @param {*} path  path
+ * @param {*} path path
  */
-function getPathMethod(path) {
+function getPathMethod(path, props) {
   const methods = []
 
   if (path) Object.entries(path).forEach(method => {
@@ -305,10 +246,10 @@ function getPathMethod(path) {
 
       /// Request Body -> All included
       /// requestBody.content
-      requestBody: _getRequestBody(m.requestBody, typeRequest, reqContentType, required, _properties),
+      requestBody: _getRequestBody(m.requestBody, typeRequest, reqContentType, required, _properties, props),
 
       // Response
-      responses: getResponses(m)
+      responses: getResponses(m, props)
     })
   })
   return methods
@@ -321,16 +262,20 @@ function getPathMethod(path) {
  * @param {*} typeRequest 
  * @param {*} reqContentType 
  * @param {*} required 
- * @param {*} props 
+ * @param {*} properties 
  * @returns 
  */
-function _getRequestBody(requestBody, typeRequest, reqContentType, required, props) {
+function _getRequestBody(requestBody, typeRequest, reqContentType, required, properties, props) {
+  const getprop = _getProperties(properties, required)
+
+  props.push(getprop)
+
   return {
     required: required,
     component: _.capitalize(typeRequest),
     description: requestBody ? requestBody.description : '',
     contentType: reqContentType,
-    properties: _getProperties(props, required)
+    properties: getprop
   }
 }
 
@@ -350,10 +295,11 @@ function _getProperties(props, req) {
 
     properties.push({
       name: el[0],
-      dartType: transformType({ type: type, format: format, isEnum: isEnum }),
+      // dartType: transformType({ type: type, format: format, isEnum: isEnum }),
       type: type,
       enum: enumm ? _.join(enumm, ',') : '',
       format: format,
+      isEnum: isEnum,
       example: el[1].example ? el[1].example : '',
       required: req ? req.includes(el[0]) : false
     })
@@ -361,14 +307,81 @@ function _getProperties(props, req) {
   return properties
 }
 
+
+/**
+ * Sanitize / convert type
+ * @param {*} field 
+ * @param {*} entities 
+ * @returns 
+ */
+function transformType(type, lang) {
+  let newType = {}
+  newType.origin = type.type ? type.type : ''
+  newType.example = type.example ? type.example : ''
+  newType.description = type.description ? type.description : ''
+  newType.type = 'String'
+  newType.typeDesc = ''
+
+  switch (type.type) {
+    case 'integer':
+      if (type.format == 'int64')
+        newType.type = 'double'
+      else if (type.format == 'int32')
+        newType.type = 'int'
+      break;
+    case 'number':
+      if (type.format == 'float')
+        newType.type = 'Float'
+      else if (type.format == 'double')
+        newType.type = 'double'
+      break;
+    case 'string':
+      switch (type.format) {
+        case 'byte':
+          newType.type = 'ByteData'
+          break;
+        case 'binary':
+          newType.type = 'BinaryCodec'
+          break;
+        case 'date':
+          newType.type = 'DateTime'
+          break;
+        case 'date-time':
+          newType.type = 'DateTime'
+          break;
+        case 'password':
+        default:
+          newType.type = 'String'
+          break;
+      }
+      break;
+    case (type.type == 'Instant'):
+      newType.type = 'int'
+      newType.typeDesc = '.toIso8601String()' + 'Z'
+      break
+    case 'array':
+      newType.type = 'List'
+      break;
+    case 'uuid':
+      newType.type = 'String'
+      break;
+    case 'object':
+      newType.type = type.xml ? _.capitalize(type.xml.name) : ''
+      break;
+  }
+
+  if (type.isEnum) newType.type = 'String'
+
+  return newType
+}
+
 /**
  * Mapping responses
  * @param {*} list 
  * @returns 
  */
-function getResponses(list) {
+function getResponses(list, props) {
   const responses = []
-  //let required = []
 
   if (list && list.responses)
     Object.entries(list.responses).forEach(r => {
@@ -388,7 +401,7 @@ function getResponses(list) {
         description: r[1].description ? r[1].description : '',
 
         /// responses.<responseCode>.content
-        content: r[1].content ? _getResponseContentType(r[1].content) : [],
+        content: r[1].content ? _getResponseContentType(r[1].content, props) : [],
 
         /// responses.<responseCode>.content
         //required: required,
@@ -404,7 +417,7 @@ function getResponses(list) {
  * @param {*} contentType 
  * @returns 
  */
-function _getResponseContentType(contentType) {
+function _getResponseContentType(contentType, props) {
   let contenType = ''
   let _props = []
   let type = ''
@@ -430,6 +443,8 @@ function _getResponseContentType(contentType) {
 
     _items.properties = c[1].schema.items ? _getProperties(c[1].schema.items.properties, []) : []
   })
+
+  props.push(_items.properties)
 
   return {
     contenType: contenType,
@@ -462,62 +477,50 @@ function propsForServices(paths) {
   const methods = []
   for (const i in paths) {
     for (const m in paths[i].methods) {
-      const path = paths[i].path ? paths[i].path : '';
-      const methodName = paths[i].methods[m].operationId ? paths[i].methods[m].operationId : '';
-      const summary = paths[i].methods[m].summary ? paths[i].methods[m].summary : '';
-      const methodPath = validatePath(paths[i].methods[m].method);
-      const desc = paths[i].methods[m].description ? paths[i].methods[m].description : '';
 
-
-      // RESPONSE
-      const responses = paths[i].methods[m].responses;
-      const code200 = responses.find(e => e.code == '200')
-      const responseContent = code200 ? code200 : {}
-
-      let responseType = 'void'
-
-      if (responseContent.content) {
-        if (responseContent.content.component)
-          responseType = responseContent.content.component
-        else if (responseContent.content.items)
-          responseType = _.capitalize(responseContent.content.items.type + '' + i)
-      } else responseType = 'Object' + i
-
+      const methodPath = _transMethod(paths[i].methods[m].method);
+      const responseType = _getResponseType(paths[i].methods[m].responses, i)
 
       // PARAMETER
       const param = putParam(paths[i].methods[m], responseType);
       const parameters = param.param;
       const query = param.query;
 
-      const isInput = responseType ? true : false;
-
-
-      let payload = '';
-      let payloadStatement = '';
-      let onlyParam = ''
-      if (methodPath == 'post' || methodPath == 'update') {
-        payload = ', ' + param.payload;
-        payloadStatement = param.payloadStatement;
-        onlyParam = param.onlyParam
-      }
-
       methods.push({
-        path: path,
-        methodName: methodName,
-        methodPath: methodPath,
-        summary: summary,
-        desc: desc,
+        path: paths[i].path ? paths[i].path : '',
+        methodName: paths[i].methods[m].operationId ? paths[i].methods[m].operationId : '',
+        methodPath: methodPath.method,
+        summary: paths[i].methods[m].summary ? paths[i].methods[m].summary : '',
+        desc: paths[i].methods[m].description ? paths[i].methods[m].description : '',
         responseType: responseType,
         parameters: parameters,
         query: query,
-        isInput: isInput,
-        requestPayload: payload,
-        requestPayloadStatement: payloadStatement,
-        onlyParam: onlyParam
+        requestPayload: methodPath.payload,
+        requestPayloadStatement: methodPath.payloadStatement,
+        onlyParam: methodPath.onlyParam
       })
     }
   }
   return methods
+}
+
+
+
+function _getResponseType(responses, i) {
+  let responseType = 'void'
+  // RESPONSE
+  const _responses = responses;
+  const code200 = _responses.find(e => e.code == '200')
+  const responseContent = code200 ? code200 : {}
+
+  if (responseContent.content) {
+    if (responseContent.content.component)
+      responseType = responseContent.content.component
+    else if (responseContent.content.items)
+      responseType = _.capitalize(responseContent.content.items.type + '' + i)
+  } else responseType = 'Object' + i
+
+  return responseType
 }
 
 /**
@@ -540,7 +543,6 @@ function putParam(input, resType) {
     param = input.requestBody.properties;
     isProp = true
   }
-
 
   if (param) {
 
@@ -580,12 +582,12 @@ function putParam(input, resType) {
   if (query)
     query = '?' + query
 
-  return { 
-    param: result, 
-    query: query, 
-    payload: resType.toLowerCase(), 
+  return {
+    param: result,
+    query: query,
+    payload: resType.toLowerCase(),
     payloadStatement: payloadStatement,
-    onlyParam : onlyParam
+    onlyParam: onlyParam
   };
 }
 
@@ -594,14 +596,30 @@ function putParam(input, resType) {
  * @param {*} m 
  * @returns 
  */
-function validatePath(m) {
+function _transMethod(m) {
   let method = m;
+  let payload = '';
+  let payloadStatement = '';
+  let onlyParam = ''
+
   if (m == 'put')
     method = 'update';
   else if (m == 'get')
     method = 'fetch';
 
-  return method;
+
+  if (methodPath == 'post' || methodPath == 'update') {
+    payload = ', ' + param.payload;
+    payloadStatement = param.payloadStatement;
+    onlyParam = param.onlyParam
+  }
+
+  return {
+    method: method,
+    payload: payload,
+    payloadStatement: payloadStatement,
+    onlyParam: onlyParam
+  };
 }
 
 /**
@@ -664,7 +682,7 @@ function otherFields(input) {
   for (const p in param) {
     fields.push(
       {
-        "fieldType": transformType(isProp ? param[p].dartType : param[p].schema.type, false),
+        "fieldType": isProp ? param[p].type : param[p].schema.type, //transformType(isProp ? param[p].type : param[p].schema.type, false),
         "fieldName": param[p].name,
         "fieldIsEnum": false,
         "fieldValues": "",
@@ -679,3 +697,29 @@ function otherFields(input) {
 
   return fields
 }
+
+/**
+ * uniqProperties from array
+ * @param {*} properties 
+ * @returns Unique array object
+ */
+function uniqProperties(properties) {
+  const arr = _.uniqWith(properties, _.isEqual)
+  return _.filter(arr, (a) => {
+    return a.length > 0
+  })
+}
+
+/**
+ * findEqualObject from array
+ * @param {array} objects 
+ * @param {object} properties 
+ * @returns object which equals with properties instead []
+ */
+function findEqualObject(objects, properties) {
+  return _.filter(objects, (a) => {
+    return _.isEqual(a, properties)
+  })
+}
+
+

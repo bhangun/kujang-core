@@ -562,6 +562,7 @@ function putParam(input, resType, lang) {
   let param = {}
   let isProp = false
   let onlyParam = ''
+  let dartParam = ''
   let jsonParam = ''
   let query = ''
   let payloadStatement = 'const ' + resType.toLowerCase() + ' = ' + resType + '(';
@@ -590,7 +591,9 @@ function putParam(input, resType, lang) {
 
       result += comma + req + _type + '? ' + param[p].name;
 
-      onlyParam += comma + param[p].name + ': ' + param[p].name;
+      onlyParam += comma + param[p].name
+
+      dartParam += comma + param[p].name + ': ' + param[p].name;
 
       jsonParam += comma + '"'+param[p].name + '": '+ isString(_type,param[p].name);
 
@@ -622,6 +625,7 @@ function putParam(input, resType, lang) {
     payload: resType.toLowerCase(),
     payloadStatement: payloadStatement,
     onlyParam: onlyParam,
+    dartParam: dartParam,
     jsonParam: jsonParam
   };
 }
@@ -652,11 +656,11 @@ function _transMethod(m, param) {
     method = 'fetch';
 
 
-  if (m == 'post' || m == 'update') {
+  if (m == 'post' || m == 'update' || method === 'update') {
     payload = ', ' + param.payload;
     payloadStatement = param.payloadStatement
     onlyParam = param.onlyParam
-    jsonParam = ', {'+param.jsonParam+'}'
+    jsonParam = ', json.encode({'+param.jsonParam+'})'
   }
 
   return {

@@ -520,7 +520,8 @@ function propsForServices(paths, properties, lang) {
         query: query,
         requestPayload: methodPath.payload,
         requestPayloadStatement: methodPath.payloadStatement,
-        onlyParam: methodPath.onlyParam
+        onlyParam: methodPath.onlyParam,
+        jsonParam: methodPath.jsonParam
       })
     }
   }
@@ -561,6 +562,7 @@ function putParam(input, resType, lang) {
   let param = {}
   let isProp = false
   let onlyParam = ''
+  let jsonParam = ''
   let query = ''
   let payloadStatement = 'const ' + resType.toLowerCase() + ' = ' + resType + '(';
 
@@ -585,11 +587,12 @@ function putParam(input, resType, lang) {
     for (const p in param) {
 
       const _type = isProp ? transformType(param[p], lang).type : transformType(param[p].schema, lang).type 
-      console.log(_type)
 
       result += comma + req + _type + '? ' + param[p].name;
 
       onlyParam += comma + param[p].name + ': ' + param[p].name;
+
+      jsonParam += comma + '"'+param[p].name + '": '+ isString(_type,param[p].name);
 
       if (q > 0)
         and = '%26'
@@ -618,8 +621,16 @@ function putParam(input, resType, lang) {
     query: query,
     payload: resType.toLowerCase(),
     payloadStatement: payloadStatement,
-    onlyParam: onlyParam
+    onlyParam: onlyParam,
+    jsonParam: jsonParam
   };
+}
+
+function isString(type,param){
+  if(type ==='String' || type ==='string')
+    return '"${'+param+'}"'
+  else
+    return param
 }
 
 /**
@@ -633,6 +644,7 @@ function _transMethod(m, param) {
   let payload = '';
   let payloadStatement = '';
   let onlyParam = ''
+  let jsonParam = ''
 
   if (m == 'put')
     method = 'update';
@@ -642,15 +654,17 @@ function _transMethod(m, param) {
 
   if (m == 'post' || m == 'update') {
     payload = ', ' + param.payload;
-    payloadStatement = param.payloadStatement;
+    payloadStatement = param.payloadStatement
     onlyParam = param.onlyParam
+    jsonParam = ', {'+param.jsonParam+'}'
   }
 
   return {
     method: method,
     payload: payload,
     payloadStatement: payloadStatement,
-    onlyParam: onlyParam
+    onlyParam: onlyParam,
+    jsonParam: jsonParam
   };
 }
 

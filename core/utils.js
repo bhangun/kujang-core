@@ -67,7 +67,7 @@ function mappingProps(api, appsName) {
     paths: _paths, 
   }
 
-  schema.entities = _entities? _entities:[]
+  schema.entities = _entities.length>0? _entities: entityFromProperties(_uniqprop) 
   schema.properties = _uniqprop? _uniqprop :[]
 
   return schema
@@ -321,13 +321,52 @@ function _getProperties(props, req) {
 }
 
 
+
+/**
+ * Mapping responses
+ * @param {*} list 
+ * @returns 
+ */
+function getResponses(list, props) {
+  const responses = []
+
+  if (list && list.responses)
+    Object.entries(list.responses).forEach(r => {
+
+      let headersType = []
+
+      if (r[1].headers)
+        Object.entries(r[1].headers).forEach(c => {
+          headersType.push(c[0])
+        })
+
+      responses.push({
+        /// responses.<responseCode>
+        code: r[0],
+
+        /// responses.<responseCode>.description
+        description: r[1].description ? r[1].description : '',
+
+        /// responses.<responseCode>.content
+        content: r[1].content ? _getResponseContentType(r[1].content, props) : [],
+
+        /// responses.<responseCode>.content
+        //required: required,
+
+        headers: headersType
+      })
+    })
+  return responses;
+}
+
+
 /**
  * Sanitize / convert type
  * @param {*} field 
  * @param {*} entities 
  * @returns 
  */
-function transformType(type, lang) {
+ function transformType(type, lang) {
   let newType = {}
   newType.origin = type.type ? type.type : ''
   newType.example = type.example ? type.example : ''
@@ -386,43 +425,6 @@ function transformType(type, lang) {
   if (type.isEnum) newType.type = 'String'
 
   return newType
-}
-
-/**
- * Mapping responses
- * @param {*} list 
- * @returns 
- */
-function getResponses(list, props) {
-  const responses = []
-
-  if (list && list.responses)
-    Object.entries(list.responses).forEach(r => {
-
-      let headersType = []
-
-      if (r[1].headers)
-        Object.entries(r[1].headers).forEach(c => {
-          headersType.push(c[0])
-        })
-
-      responses.push({
-        /// responses.<responseCode>
-        code: r[0],
-
-        /// responses.<responseCode>.description
-        description: r[1].description ? r[1].description : '',
-
-        /// responses.<responseCode>.content
-        content: r[1].content ? _getResponseContentType(r[1].content, props) : [],
-
-        /// responses.<responseCode>.content
-        //required: required,
-
-        headers: headersType
-      })
-    })
-  return responses;
 }
 
 /**
@@ -491,16 +493,16 @@ function transformApi(appsName, path, callback) {
  * @param {*} paths 
  * @returns 
  */
-function propsForServices(paths) {
+function propsForServices(paths, properties, lang) {
 
   const methods = []
   for (const i in paths) {
     for (const m in paths[i].methods) {
 
-      const responseType = _getResponseType(paths[i].methods[m].responses, i)
+      const responseType = _getResponseType(paths[i].methods[m].responses, properties)
 
       // PARAMETER
-      const param = putParam(paths[i].methods[m], responseType);
+      const param = putParam(paths[i].methods[m], responseType, lang);
 
       const methodPath = _transMethod(paths[i].methods[m].method, param);
    
@@ -527,7 +529,7 @@ function propsForServices(paths) {
 
 
 
-function _getResponseType(responses, i) {
+function _getResponseType(responses, properties) {
   let responseType = 'void'
   // RESPONSE
   const _responses = responses;
@@ -537,9 +539,13 @@ function _getResponseType(responses, i) {
   if (responseContent.content) {
     if (responseContent.content.component)
       responseType = responseContent.content.component
-    else if (responseContent.content.items)
-      responseType = _.capitalize(responseContent.content.items.type + '' + i)
-  } else responseType = 'Object' + i
+    else if(responseContent.content.properties)
+      responseType = findEqualObject(responseContent.content.properties, properties).name
+    else if (responseContent.content.items){
+      //responseType = _.capitalize(responseContent.content.items.type + '' + i)
+      responseType = findEqualObject(responseContent.content.items.properties, properties).name
+    }
+  } else responseType = 'UnknownObject'
 
   return responseType
 }
@@ -550,7 +556,7 @@ function _getResponseType(responses, i) {
  * @param {*} resType 
  * @returns 
  */
-function putParam(input, resType) {
+function putParam(input, resType, lang) {
   let result = '';
   let param = {}
   let isProp = false
@@ -577,7 +583,11 @@ function putParam(input, resType) {
       req = '@required '
 
     for (const p in param) {
-      result += comma + req + (isProp ? param[p].type : param[p].schema.type) + '? ' + param[p].name;
+
+      const _type = isProp ? transformType(param[p], lang).type : transformType(param[p].schema, lang).type 
+      console.log(_type)
+
+      result += comma + req + _type + '? ' + param[p].name;
 
       onlyParam += comma + param[p].name + ': ' + param[p].name;
 
@@ -720,32 +730,6 @@ function otherFields(input) {
   return fields
 }
 
-/**
- * 
- * @param {*} input 
- * @returns 
- */
- function _fields(param) {
-  const fields = []
-  param.forEach( p => {
-    fields.push(
-      {
-        "fieldType": p.type,  
-        "fieldName": p.name,
-        "fieldIsEnum": p.isEnum,
-        "fieldValues": p.enum,
-        "fieldsContainOneToMany": false,
-        "fieldsContainOwnerManyToMany": false,
-        "fieldsContainOwnerOneToOne": false,
-        "fieldsContainNoOwnerOneToOne": false,
-        "fieldsContainManyToOne": false,
-        'example': p.example,
-        'required': p.required
-      }
-    )
-  })
-  return fields
- }
 
 /**
  * uniqProperties from array
@@ -766,9 +750,54 @@ function uniqProperties(properties) {
  * @returns object which equals with properties instead []
  */
 function findEqualObject(objects, properties) {
-  return _.filter(objects, (a) => {
+  let index = 0
+  const obj =  _.filter(objects, (a,i) => {
+    index = i
     return _.isEqual(a, properties)
   })
+
+  return {name: 'Object'+index, object: obj, index: index}
 }
 
+
+function entityFromProperties(properties){
+  const entities = []
+  properties.forEach((el, i) =>{
+    const fields = []
+
+    const entity = {
+        "appsName": this.appsName,
+        "pkType": "String",
+        "relationships": [],
+        "entityName": 'Object'+i,
+        "entityClass": 'Object'+i,
+        "entityInstance": 'object'+i,
+        "entityFolderName": 'object'+i,
+        "entityFileName": 'object'+i,
+        "enableTranslation": false,
+        "fields": []
+      }
+    
+    el.forEach( f =>{
+        fields.push({
+            "fieldType": transformType({type:f.type,isEnum: f.isEnum}, 'dart'),
+            "fieldName": f.name,
+            "fieldIsEnum": f.isEnum,
+            "fieldValues": f.isEnum? f.enum:'',
+            "fieldsContainOneToMany": false,
+            "fieldsContainOwnerManyToMany": false,
+            "fieldsContainOwnerOneToOne": false,
+            "fieldsContainNoOwnerOneToOne": false,
+            "fieldsContainManyToOne": false,
+            "required": f.required,
+        })
+    })
+
+    entity.fields = fields
+
+    entities.push(entity)
+  })
+
+  return entities
+}
 

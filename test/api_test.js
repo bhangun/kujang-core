@@ -10,13 +10,13 @@ const API3 = 'https://petstore3.swagger.io/api/v3/openapi.json'
 const API4 = 'test/pet-oas3.yaml'
 const API5 = '../api_sample/api02.yaml'
 
-const API01J = '../kujang-core/test/api/api01.json'
-const API01Y = '../kujang-core/test/api/api01.yaml'
-const API01R = '../kujang-core/test/api/api01_result.json'
+const API01J = '../api_sample/api/api01.json'
+const API01Y = '../api_sample/api/api01.yaml'
+const API01R = '../api_sample/api/api01_result.json'
 
-const API02J = '../kujang-core/test/api/api02.json'
-const API02R = '../kujang-core/test/api/api02_result.json'
-const API02Y = '../kujang-core/test/api/api02.yaml'
+const API02J = '../api_sample/api/api02.json'
+const API02R = '../api_sample/api/api02_result.json'
+const API02Y = '../api_sample/api/api02.yaml'
 
 const tes = class extends GenBase {
 
@@ -147,10 +147,10 @@ function testArray(_path) {
         //const com = _.compact(api.paths)
         //console.log(com)
         const arr = api
-        const arr2 = _.uniqWith(api.properties, _.isEqual)
-        const arr3 = _.filter(api.properties, (p)=>{
+        const arr2 = utils.uniqProperties(api.properties)
+       /*  const arr3 = _.filter(api.properties, (p)=>{
              return _.map( arr2, p)   
-        })
+        }) */
 
         //const arr4 = _.filter(arr,(a)=>{console.log(a.length)})
 
@@ -160,11 +160,17 @@ function testArray(_path) {
        /*  const arr5 = _.filter(arr2,(a)=>{
             console.log(a.length)
             return a.length <6})
+*/
 
-        const arr6 = _.filter(arr2,(a)=>{
-            console.log(a.length)
-                return _.isEqual(a, coba)}) */
+        const arr6 = _.filter(arr2,(a,i)=>{
+            //console.log(coba)
+            console.log(i)
+                return _.isEqual(a, coba)
+            }) 
 
+
+
+                console.log(arr6)
        // const aa = utils.uniqProperties(api.properties)
         //console.log(aa)
         //console.log(utils.findEqualObject(api.properties, coba))
@@ -176,20 +182,18 @@ function testArray(_path) {
         }) */
         //console.log(api.properties)
 
-        fs.writeFile('origin.json', JSON.stringify(api), (err) => {
+       /*  fs.writeFile('origin.json', JSON.stringify(api), (err) => {
             if (err) throw err;
             console.log('The file has been saved!');
-        })
+        }) */
 
     })
 }
 
-function testArray2(p){
-    
-}
 
 
-testArray(API01Y)
+
+testArray(API02Y)
 //cobaArray()
 //writingEntity()
 //writingEntity2()

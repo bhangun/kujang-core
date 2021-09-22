@@ -317,7 +317,18 @@ module.exports = class extends Generator {
     return utils.propsForServices(paths)
   }
 
+
   otherEntity(paths) {
     return utils.otherEntity(paths)
+  }
+
+ /**
+ * findEqualObject from array
+ * @param {array} objects 
+ * @param {object} properties 
+ * @returns object which equals with properties instead []
+ */
+  findEqualObject(objects, properties){
+    return utils.findEqualObject(objects, properties)
   }
 }

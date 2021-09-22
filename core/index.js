@@ -29,7 +29,7 @@ module.exports = class extends Generator {
     // Calling the super constructor is important so our generator is correctly set up
     super(args, opts, features);
 
-    this.option("modules", { type: String, required: false });
+    this.option("module", { type: String, required: false });
 
     // expose lodash to templates
     this._ = _;
@@ -65,7 +65,7 @@ module.exports = class extends Generator {
   }
 
   promptOas(obj, props) {
-    props.modules = this.options.modules
+    props.module = this.options.module
     props.isPrintOrigin = this.options.printOrigin
     this.composeWith(require.resolve('./oas'), {obj:obj, props:props});
   }

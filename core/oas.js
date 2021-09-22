@@ -24,7 +24,7 @@ module.exports = class extends GenBase {
         super(args, opts);
        
         this.props = opts.props
-        this.props.modules = opts.props.modules
+        this.props.module = opts.props.module
         this.obj = opts.obj
     }
 
@@ -56,18 +56,26 @@ module.exports = class extends GenBase {
 
                 this.obj.props.api_source = props.path_api
 
-                /// since: --modules <custom_modules>
-                this.obj.props.modules = this.props.modules
+                /// since: --module <custom_module>
+                this.obj.props.module = this.props.module
 
                 this.obj.writeKujangJson(props.appsName, api)
 
                 if (this.props.isOriginWrite) this.obj.writeOriginJson(appsName, origin)
 
-                if(this.props.modules)
-                    this.composeWith(require.resolve(this.props.modules), this.obj.props);
+                if(this.props.module){
+                    const _path = checkPath(this.props.module)
                     
+                    this.composeWith(require.resolve(_path + this.props.module), this.obj.props);
+                }
                 done();
             })
         });
     }
+}
+
+function checkPath(path){
+  if (/^(..\/)[^\s]*$/.test(path)) return '../'
+  else if (/^(..\\)[^\s]*$/.test(path)) return '..\\'
+  else return ''
 }

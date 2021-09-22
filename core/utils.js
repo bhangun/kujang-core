@@ -37,11 +37,25 @@ module.exports = {
  * Mapping all api element to kujang schema
  * @param {*} api 
  * @param {*} appsName 
- * @returns api element
+ * @returns Entity{
+    appsName: '',
+    baseName: '',
+    packageFolder: '',
+    info: {},
+    servers: {},
+    securitySchemes:  {},
+    tags: [{}],
+    paths: [{}],
+    entities: [{}]
+    properties: [{}]
+  }
  */
 function mappingProps(api, appsName) {
   const _props = []
-  const entities = mappingEntities(appsName, api)
+  const _entities = mappingEntities(appsName, api)
+  const _paths = getPaths(api, _props)
+  const _uniqprop =  uniqProperties(_props)
+
   const schema =  {
     appsName: appsName,
     baseName: appsName,
@@ -50,12 +64,11 @@ function mappingProps(api, appsName) {
     servers: api.servers,
     securitySchemes: api.components ? getSecurity(api.components.securitySchemes) : {},
     tags: api.tags,
-    paths: getPaths(api, _props),
+    paths: _paths, 
   }
 
-  const uniqprop =  uniqProperties(_props)
-  schema.entities = entities? entities:[]
-  schema.properties = uniqprop? uniqprop :[]
+  schema.entities = _entities? _entities:[]
+  schema.properties = _uniqprop? _uniqprop :[]
 
   return schema
 }
@@ -473,16 +486,24 @@ function transformApi(appsName, path, callback) {
   })
 }
 
+/**
+ * 
+ * @param {*} paths 
+ * @returns 
+ */
 function propsForServices(paths) {
+
   const methods = []
   for (const i in paths) {
     for (const m in paths[i].methods) {
 
-      const methodPath = _transMethod(paths[i].methods[m].method);
       const responseType = _getResponseType(paths[i].methods[m].responses, i)
 
       // PARAMETER
       const param = putParam(paths[i].methods[m], responseType);
+
+      const methodPath = _transMethod(paths[i].methods[m].method, param);
+   
       const parameters = param.param;
       const query = param.query;
 
@@ -556,7 +577,7 @@ function putParam(input, resType) {
       req = '@required '
 
     for (const p in param) {
-      result += comma + req + (isProp ? param[p].dartType.type : param[p].schema.type) + '? ' + param[p].name;
+      result += comma + req + (isProp ? param[p].type : param[p].schema.type) + '? ' + param[p].name;
 
       onlyParam += comma + param[p].name + ': ' + param[p].name;
 
@@ -596,7 +617,8 @@ function putParam(input, resType) {
  * @param {*} m 
  * @returns 
  */
-function _transMethod(m) {
+function _transMethod(m, param) {
+
   let method = m;
   let payload = '';
   let payloadStatement = '';
@@ -608,7 +630,7 @@ function _transMethod(m) {
     method = 'fetch';
 
 
-  if (methodPath == 'post' || methodPath == 'update') {
+  if (m == 'post' || m == 'update') {
     payload = ', ' + param.payload;
     payloadStatement = param.payloadStatement;
     onlyParam = param.onlyParam
@@ -642,6 +664,7 @@ function otherEntity(paths) {
       else if (responseContent.content.items.type)
         responseType = _.capitalize(responseContent.content.items.type + '' + i)
       else responseType = 'Object' + i
+      
 
       responseTypes.push(
         {
@@ -694,9 +717,35 @@ function otherFields(input) {
       }
     )
   }
-
   return fields
 }
+
+/**
+ * 
+ * @param {*} input 
+ * @returns 
+ */
+ function _fields(param) {
+  const fields = []
+  param.forEach( p => {
+    fields.push(
+      {
+        "fieldType": p.type,  
+        "fieldName": p.name,
+        "fieldIsEnum": p.isEnum,
+        "fieldValues": p.enum,
+        "fieldsContainOneToMany": false,
+        "fieldsContainOwnerManyToMany": false,
+        "fieldsContainOwnerOneToOne": false,
+        "fieldsContainNoOwnerOneToOne": false,
+        "fieldsContainManyToOne": false,
+        'example': p.example,
+        'required': p.required
+      }
+    )
+  })
+  return fields
+ }
 
 /**
  * uniqProperties from array

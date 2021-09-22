@@ -304,8 +304,8 @@ module.exports = class extends Generator {
    * @param {*} isEnum 
    * @returns 
    */
-  transformType(type, isEnum) {
-    return utils.transformType(type, isEnum)
+  transformType(type, isEnum, lang) {
+    return utils.transformType({type: type, isEnum:isEnum}, lang)
   }
 
   /**

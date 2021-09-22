@@ -51,10 +51,12 @@ module.exports = class extends GenBase {
         const done = this.async();
         this.prompt(prompts).then((props) => {
             this.transformApi(props.appsName, props.path_api, (api, origin)=>{
+
                 this.obj.props = api
 
                 this.obj.props.api_source = props.path_api
 
+                /// since: --modules <custom_modules>
                 this.obj.props.modules = this.props.modules
 
                 this.obj.writeKujangJson(props.appsName, api)
@@ -63,14 +65,9 @@ module.exports = class extends GenBase {
 
                 if(this.props.modules)
                     this.composeWith(require.resolve(this.props.modules), this.obj.props);
+                    
                 done();
             })
         });
-
-       /*  console.log(this.obj.props)
-       
-        if(this.props.modules)
-            this.composeWith(require.resolve(this.props.modules), this.obj.props); */
     }
-    
 }

@@ -141,7 +141,7 @@ function mappingEntities(appsName, api) {
       pkType: 'String',
       relationships: [],
       entityName: entity[0],
-      entityClass: entity[0],
+      entityClass: _.capitalize(entity[0]),
       entityInstance: _.camelCase(entity[0]),
       entityFolderName: _.camelCase(entity[0]),
       entityFileName: _.camelCase(entity[0]),
@@ -382,10 +382,10 @@ function getResponses(list, props) {
         newType.type = 'int'
       break;
     case 'number':
-      if (type.format == 'float')
-        newType.type = 'Float'
-      else if (type.format == 'double')
+      if (type.format == 'float' || type.format == 'double')
         newType.type = 'double'
+     // else if (type.format == 'double')
+      //  newType.type = 'double'
       break;
     case 'string':
       switch (type.format) {

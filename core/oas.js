@@ -28,7 +28,7 @@ module.exports = class extends GenBase {
         this.obj = opts.obj
     }
 
-    prompting() {
+    prompting() { console.log('---------')
         const appsName = this.getDefaultAppName(); 
         const prompts = [
             {

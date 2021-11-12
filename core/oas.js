@@ -28,7 +28,7 @@ module.exports = class extends GenBase {
         this.obj = opts.obj
     }
 
-    prompting() { console.log('---------')
+    prompting() {
         const appsName = this.getDefaultAppName(); 
         const prompts = [
             {
@@ -61,7 +61,9 @@ module.exports = class extends GenBase {
 
                 this.obj.writeKujangJson(props.appsName, api)
 
-                if (this.props.isOriginWrite) this.obj.writeOriginJson(appsName, origin)
+               // if (this.props.isOriginWrite) 
+                    this.obj.writeOriginJson(props.appsName, origin)
+                //console.log(origin)
 
                 if(this.props.module){
                     const _path = checkPath(this.props.module)

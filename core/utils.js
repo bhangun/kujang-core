@@ -361,18 +361,25 @@ function getResponses(list, props) {
 
 
 /**
- * Sanitize / convert type
- * @param {*} field 
- * @param {*} entities 
+ * 
+ * @param {*} type 
+ * @param {*} enumValue 
+ * @param {*} lang 
  * @returns 
  */
- function transformType(type, lang) {
+ function transformType(type, enumValue, lang) {
   let newType = {}
-  newType.origin = type.type ? type.type : ''
+
+  let _comp = ''
+  if(type.items && type.items.$ref)
+    _comp = _.capitalize(type.items.$ref.split(RegExp(`^#\/components\/schemas\/`))[1])
+
+  newType.origin = type.type ? type.type : _comp
   newType.example = type.example ? type.example : ''
   newType.description = type.description ? type.description : ''
   newType.type = 'String'
   newType.typeDesc = ''
+
 
   switch (type.type) {
     case 'integer':
@@ -412,13 +419,19 @@ function getResponses(list, props) {
       newType.typeDesc = '.toIso8601String()' + 'Z'
       break
     case 'array':
-      newType.type = 'List'
+      if(_comp)
+        newType.type = 'List<'+_comp+'>'
+      else 
+        newType.type = 'List'
       break;
     case 'uuid':
       newType.type = 'String'
       break;
     case 'object':
-      newType.type = type.xml ? _.capitalize(type.xml.name) : ''
+      if(_comp)
+        newType.type = _comp
+      else 
+        newType.type = type.xml ? _.capitalize(type.xml.name) : ''
       break;
   }
 
@@ -444,8 +457,13 @@ function _getResponseContentType(contentType, props) {
     /// responses.<responseCode>.content.<contenType>
     contenType = c[0]
 
+    const _ref = c[1].schema.$ref
+    let _comp = ''
+    if(_ref)
+      _comp = _ref.split(RegExp(`^#\/components\/schemas\/`))[1]
+
     /// responses.<responseCode>.content.schema.xml.name
-    type = c[1].schema.xml ? c[1].schema.xml.name : ''
+    type = c[1].schema.xml ? c[1].schema.xml.name : _comp
 
     /// responses.<responseCode>.content.schema.required
     req = c[1].schema.required
@@ -457,6 +475,8 @@ function _getResponseContentType(contentType, props) {
     _items.type = c[1].schema.items ? c[1].schema.items.type : ''
 
     _items.properties = c[1].schema.items ? _getProperties(c[1].schema.items.properties, []) : []
+
+
   })
 
   props.push(_items.properties)
@@ -478,7 +498,50 @@ function _getResponseContentType(contentType, props) {
  */
 function transformApi(appsName, path, callback) {
 
-  SwaggerParser.validate(path, (err, api) => {
+  SwaggerParser.bundle(path, 
+    /* {
+      continueOnError: true,            // Don't throw on the first error
+      parse: {
+        json: true,                    // Enable the JSON parser
+        yaml: {
+          allowEmpty: false             // Don't allow empty YAML files
+        },
+        text: {
+          canParse: [".txt", ".html"],  // Parse .txt and .html files as plain text (strings)
+          encoding: 'utf16'             // Use UTF-16 encoding
+        }
+      },
+      resolve: {
+        file: false,                    // Don't resolve local file references
+        http: {
+          timeout: 2000,                // 2 second timeout
+          withCredentials: true,        // Include auth credentials when resolving HTTP references
+        }
+      },
+      dereference: {
+        circular: false                 // Don't allow circular $refs
+      },
+      validate: {
+        spec: false                     // Don't validate against the Swagger spec
+      }
+    }, */
+    {
+      continueOnError: true,            // Don't throw on the first error
+      parse: {
+        json: true,                    // Enable the JSON parser
+        yaml: {
+          allowEmpty: false             // Don't allow empty YAML files
+        },
+        text: {
+          canParse: [".txt", ".html", ""],  // Parse .txt and .html files as plain text (strings)
+          encoding: 'utf16'             // Use UTF-16 encoding
+        }
+      },
+      dereference: {
+        circular: false
+      }
+    },
+    (err, api) => {
     if (err) {
       console.error(err);
     }

@@ -430,8 +430,10 @@ function getResponses(list, props) {
     case 'object':
       if(_comp)
         newType.type = _comp
+      else if(newType.type = type.xml)
+        newType.type =  _.capitalize(type.xml.name)
       else 
-        newType.type = type.xml ? _.capitalize(type.xml.name) : ''
+        newType.type = 'Object'
       break;
   }
 
@@ -597,7 +599,7 @@ function _getResponseType(responses, properties) {
   let responseType = 'void'
   // RESPONSE
   const _responses = responses;
-  const code200 = _responses.find(e => e.code == '200')
+  const code200 = _responses.find(e => e.code == '200' ||  e.code == '201')
   const responseContent = code200 ? code200 : {}
 
   if (responseContent.content) {
@@ -608,7 +610,7 @@ function _getResponseType(responses, properties) {
     else if (responseContent.content.items){
       //responseType = _.capitalize(responseContent.content.items.type + '' + i)
       responseType = findEqualObject(responseContent.content.items.properties, properties).name
-    }
+    } 
   } else responseType = 'UnknownObject'
 
   return responseType
@@ -621,7 +623,7 @@ function _getResponseType(responses, properties) {
  * @returns 
  */
 function putParam(input, resType, lang) {
-  let result = '';
+  let _param = '';
   let param = {}
   let isProp = false
   let onlyParam = ''
@@ -652,7 +654,7 @@ function putParam(input, resType, lang) {
 
       const _type = isProp ? transformType(param[p], lang).type : transformType(param[p].schema, lang).type 
 
-      result += comma + req + _type + '? ' + param[p].name;
+      _param += comma + req + _type + '? ' + param[p].name;
 
       onlyParam += comma + param[p].name
 
@@ -683,7 +685,7 @@ function putParam(input, resType, lang) {
     query = '?' + query
 
   return {
-    param: result,
+    param: _param,
     query: query,
     payload: resType.toLowerCase(),
     payloadStatement: payloadStatement,

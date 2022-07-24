@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * Copyright 2013-2021 the original author or authors Bhangun Hartani
  * This file is part of the Kujang Generator
@@ -282,16 +283,8 @@ module.exports = class extends Generator {
     return chalk.bold.yellow(text)
   }
 
-  chalkYellow(text) {
-    return chalk.bold.yellowBright(text)
-  }
-
   chalkBlueBright(text) {
     return chalk.bold.blueBright(text)
-  }
-
-  chalkYellow(text) {
-    return chalk.bold.yellowBright(text)
   }
 
   chalkRedBright(text) {

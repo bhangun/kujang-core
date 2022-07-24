@@ -41,5 +41,8 @@
   },
   "directories": {
     "test": "test"
+  },
+  "devDependencies": {
+    "eslint": "^8.20.0"
   }
 }

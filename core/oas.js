@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * Copyright 2013-2021 the original author or authors Bhangun Hartani
  * This file is part of the Kujang Generator

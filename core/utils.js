@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * Copyright 2013-2021 the original author or authors Bhangun Hartani
  * This file is part of the Kujang Generator
@@ -30,7 +31,8 @@ module.exports = {
   propsForServices,
   otherEntity,
   uniqProperties,
-  findEqualObject
+  findEqualObject,
+  getScopes
 };
 
 
@@ -125,7 +127,7 @@ function mappingEntities(appsName, api) {
  * @param {*} entities 
  * @returns 
  */
-function mappingFields(obj, entities) {
+function mappingFields(obj) {
   const fields = []
   if (obj.properties)
     Object.entries(obj.properties).forEach(field => {
@@ -155,12 +157,12 @@ function mappingFields(obj, entities) {
  * @param {*} lang 
  * @returns 
  */
- function transformType(type, enumValue, lang) {
+ function transformType(type) {
   let newType = {}
 
   let _comp = ''
   if(type.items && type.items.$ref)
-    _comp = _.capitalize(type.items.$ref.split(RegExp(`^#\/components\/schemas\/`))[1])
+    _comp = _.capitalize(type.items.$ref.split(RegExp(`^#/components/schemas/`))[1])
 
   newType.origin = type.type ? type.type : _comp
   newType.example = type.example ? type.example : ''
@@ -218,7 +220,7 @@ function mappingFields(obj, entities) {
     case 'object':
       if(_comp)
         newType.type = _comp
-      else if(newType.type = type.xml)
+      else if(newType.type == type.xml)
         newType.type =  _.capitalize(type.xml.name)
       else 
         newType.type = 'Object'

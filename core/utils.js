@@ -18,20 +18,22 @@
 
 const _ = require('lodash');
 const SwaggerParser = require("@apidevtools/swagger-parser");
+const path = require('./path');
+const sec = require('./security');
 
 module.exports = {
   transformApi,
   mappingProps,
   mappingEntities,
   mappingFields,
-  getPaths,
-  getPathMethod,
   transformType,
   propsForServices,
   otherEntity,
   uniqProperties,
   findEqualObject
 };
+
+
 
 /**
  * Mapping all api element to kujang schema
@@ -53,7 +55,7 @@ module.exports = {
 function mappingProps(api, appsName) {
   const _props = []
   const _entities = mappingEntities(appsName, api)
-  const _paths = getPaths(api, _props)
+  const _paths = path.getPaths(api, _props)
   const _uniqprop =  uniqProperties(_props)
 
   const schema =  {
@@ -62,7 +64,7 @@ function mappingProps(api, appsName) {
     packageFolder: appsName,
     info: api.info,
     servers: api.servers,
-    securitySchemes: api.components ? getSecurity(api.components.securitySchemes) : {},
+    securitySchemes: api.components ? sec.getSecurity(api.components.securitySchemes) : {},
     tags: api.tags,
     paths: _paths, 
   }
@@ -70,41 +72,6 @@ function mappingProps(api, appsName) {
   schema.entities = _entities.length>0? _entities: entityFromProperties(_uniqprop) 
   schema.properties = _uniqprop? _uniqprop :[]
 
-  return schema
-}
-
-/**
- * Get security information
- * @param {*} api 
- */
-function getSecurity(api) {
-  const schema = []
-  if (api) Object.entries(api).forEach(sch => {
-    let scopes = []
-    let url = ''
-    let typeName = ''
-    let position = ''
-
-    if (sch[1].flows) {
-      scopes = getScopes(sch[1].flows.implicit.scopes)
-      url = sch[1].flows.implicit.authorizationUrl
-    }
-
-    if (sch[1].name)
-      typeName = sch[1].name
-
-    if (sch[1].in)
-      position = sch[1].in
-
-    schema.push({
-      name: sch[0],
-      type: sch[1].type,
-      typeName: typeName,
-      url: url,
-      in: position,
-      scopes: scopes
-    })
-  })
   return schema
 }
 
@@ -178,186 +145,7 @@ function mappingFields(obj, entities) {
   return fields
 }
 
-/**
- * Mapping path to be use as services
- * @param {*} api Api root
- */
-function getPaths(api, props) {
-  const paths = []
-  if (api) Object.entries(api.paths).forEach(path => {
-    let param = ''
-    param = path[0] ? splitParam(path[0]) : ''
-    const hasParam = path[0].split('{').length > 1
-    paths.push({
-      pathOrigin: path[0],
-      path: param,
-      hasParam: hasParam,
-      methods: getPathMethod(path[1], props)
-    })
-  })
-  return paths
-}
 
-/**
- * Split Parameter
- * @param {*} path 
- * @returns 
- */
-function splitParam(path) {
-  return path.replaceAll('{', '${')
-}
-
-/**
- * Get Path method
- * @param {*} path path
- */
-function getPathMethod(path, props) {
-  const methods = []
-
-  if (path) Object.entries(path).forEach(method => {
-    const m = method[1];
-    const reqContentType = []
-    let typeRequest = ''
-    let required = []
-    let _properties = []
-
-    if (m.requestBody)
-      Object.entries(m.requestBody.content).forEach(c => {
-
-        /**  requestBody.content.<contentType> */
-        reqContentType.push(c[0])
-
-        /// requestBody.content.schema.xml
-        typeRequest = c[1].schema.xml ? c[1].schema.xml.name : ''
-
-        /// requestBody.content.<contentType>.schema.required
-        required = c[1].schema.required
-
-        /// requestBody.content.<contentType>.schema.properties
-        _properties = c[1].schema.properties ? c[1].schema.properties : []
-      })
-
-    methods.push({
-
-      /// paths.<path>.<method>
-      method: method[0],
-
-      /// List parameter
-      parameters: m.parameters,
-
-      /// paths.<path>.<method>.tags
-      tags: m.tags,
-
-      /// paths.<path>.<method>.summary
-      summary: m.summary,
-
-      /// paths.<path>.<method>.description
-      description: m.description,
-
-      /// paths.<path>.<method>.operationId
-      operationId: _.camelCase(m.operationId),
-
-      /// Request Body -> All included
-      /// requestBody.content
-      requestBody: _getRequestBody(m.requestBody, typeRequest, reqContentType, required, _properties, props),
-
-      // Response
-      responses: getResponses(m, props)
-    })
-  })
-  return methods
-}
-
-
-/**
- * Contain all RequestBody element
- * @param {*} requestBody 
- * @param {*} typeRequest 
- * @param {*} reqContentType 
- * @param {*} required 
- * @param {*} properties 
- * @returns 
- */
-function _getRequestBody(requestBody, typeRequest, reqContentType, required, properties, props) {
-  const getprop = _getProperties(properties, required)
-
-  props.push(getprop)
-
-  return {
-    required: required,
-    component: _.capitalize(typeRequest),
-    description: requestBody ? requestBody.description : '',
-    contentType: reqContentType,
-    properties: getprop
-  }
-}
-
-/**
- * 
- * @param {*} props 
- * @param {*} req 
- * @returns 
- */
-function _getProperties(props, req) {
-  const properties = []
-  if (props) Object.entries(props).forEach(el => {
-    const format = el[1].format ? el[1].format : ''
-    const type = el[1].type ? el[1].type : ''
-    const enumm = el[1].enum
-    const isEnum = el[1].enum ? true : false
-
-    properties.push({
-      name: el[0],
-      // dartType: transformType({ type: type, format: format, isEnum: isEnum }),
-      type: type,
-      enum: enumm ? _.join(enumm, ',') : '',
-      format: format,
-      isEnum: isEnum,
-      example: el[1].example ? el[1].example : '',
-      required: req ? req.includes(el[0]) : false
-    })
-  })
-  return properties
-}
-
-
-
-/**
- * Mapping responses
- * @param {*} list 
- * @returns 
- */
-function getResponses(list, props) {
-  const responses = []
-
-  if (list && list.responses)
-    Object.entries(list.responses).forEach(r => {
-
-      let headersType = []
-
-      if (r[1].headers)
-        Object.entries(r[1].headers).forEach(c => {
-          headersType.push(c[0])
-        })
-
-      responses.push({
-        /// responses.<responseCode>
-        code: r[0],
-
-        /// responses.<responseCode>.description
-        description: r[1].description ? r[1].description : '',
-
-        /// responses.<responseCode>.content
-        content: r[1].content ? _getResponseContentType(r[1].content, props) : [],
-
-        /// responses.<responseCode>.content
-        //required: required,
-
-        headers: headersType
-      })
-    })
-  return responses;
-}
 
 
 /**
@@ -442,55 +230,6 @@ function getResponses(list, props) {
   return newType
 }
 
-/**
- * Get ResponseContentType
- * @param {*} contentType 
- * @returns 
- */
-function _getResponseContentType(contentType, props) {
-  let contenType = ''
-  let _props = []
-  let type = ''
-  let req = []
-  let _items = {}
-
-  if (contentType) Object.entries(contentType).forEach(c => {
-
-    /// responses.<responseCode>.content.<contenType>
-    contenType = c[0]
-
-    const _ref = c[1].schema.$ref
-    let _comp = ''
-    if(_ref)
-      _comp = _ref.split(RegExp(`^#\/components\/schemas\/`))[1]
-
-    /// responses.<responseCode>.content.schema.xml.name
-    type = c[1].schema.xml ? c[1].schema.xml.name : _comp
-
-    /// responses.<responseCode>.content.schema.required
-    req = c[1].schema.required
-
-    /// responses.<responseCode>.content.schema.properties
-    _props = c[1].schema.properties
-
-    /// responses.<responseCode>.content.schema.items
-    _items.type = c[1].schema.items ? c[1].schema.items.type : ''
-
-    _items.properties = c[1].schema.items ? _getProperties(c[1].schema.items.properties, []) : []
-
-
-  })
-
-  props.push(_items.properties)
-
-  return {
-    contenType: contenType,
-    component: _.capitalize(type),
-    required: req,
-    properties: _getProperties(_props, []),
-    items: _items
-  }
-}
 
 /**
  * 
@@ -564,7 +303,7 @@ function propsForServices(paths, properties, lang) {
   for (const i in paths) {
     for (const m in paths[i].methods) {
 
-      const responseType = _getResponseType(paths[i].methods[m].responses, properties)
+      const responseType = rs.getResponseType(paths[i].methods[m].responses, properties)
 
       // PARAMETER
       const param = putParam(paths[i].methods[m], responseType, lang);
@@ -593,28 +332,6 @@ function propsForServices(paths, properties, lang) {
   return methods
 }
 
-
-
-function _getResponseType(responses, properties) {
-  let responseType = 'void'
-  // RESPONSE
-  const _responses = responses;
-  const code200 = _responses.find(e => e.code == '200' ||  e.code == '201')
-  const responseContent = code200 ? code200 : {}
-
-  if (responseContent.content) {
-    if (responseContent.content.component)
-      responseType = responseContent.content.component
-    else if(responseContent.content.properties)
-      responseType = findEqualObject(responseContent.content.properties, properties).name
-    else if (responseContent.content.items){
-      //responseType = _.capitalize(responseContent.content.items.type + '' + i)
-      responseType = findEqualObject(responseContent.content.items.properties, properties).name
-    } 
-  } else responseType = 'UnknownObject'
-
-  return responseType
-}
 
 /**
  * 
@@ -863,16 +580,16 @@ function entityFromProperties(properties){
     
     el.forEach( f =>{
         fields.push({
-            "fieldType": transformType({type:f.type,isEnum: f.isEnum}, 'dart'),
-            "fieldName": f.name,
-            "fieldIsEnum": f.isEnum,
-            "fieldValues": f.isEnum? f.enum:'',
-            "fieldsContainOneToMany": false,
-            "fieldsContainOwnerManyToMany": false,
-            "fieldsContainOwnerOneToOne": false,
-            "fieldsContainNoOwnerOneToOne": false,
-            "fieldsContainManyToOne": false,
-            "required": f.required,
+          "fieldType": transformType({type:f.type,isEnum: f.isEnum}, 'dart'),
+          "fieldName": f.name,
+          "fieldIsEnum": f.isEnum,
+          "fieldValues": f.isEnum? f.enum:'',
+          "fieldsContainOneToMany": false,
+          "fieldsContainOwnerManyToMany": false,
+          "fieldsContainOwnerOneToOne": false,
+          "fieldsContainNoOwnerOneToOne": false,
+          "fieldsContainManyToOne": false,
+          "required": f.required,
         })
     })
 

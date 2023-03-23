@@ -35,6 +35,7 @@ const API01R = '../api_sample/api/api01_result.json'
 const API02J = '../api_sample/api/api02.json'
 const API02R = '../api_sample/api/api02_result.json'
 const API02Y = '../api_sample/api/api02.yaml'
+const API6 = '../api_sample/ceph-oas3.json'
 
 const tes = class extends GenBase {
 
@@ -211,7 +212,7 @@ function testArray(_path) {
 
 
 
-testArray(API02Y)
+testArray(API6)
 //cobaArray()
 //writingEntity()
 //writingEntity2()

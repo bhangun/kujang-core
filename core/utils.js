@@ -20,6 +20,7 @@
 const _ = require('lodash');
 const SwaggerParser = require("@apidevtools/swagger-parser");
 const path = require('./path');
+const rs = require('./responses');
 const sec = require('./security');
 
 module.exports = {
@@ -541,7 +542,9 @@ function otherFields(input) {
 function uniqProperties(properties) {
   const arr = _.uniqWith(properties, _.isEqual)
   return _.filter(arr, (a) => {
-    return a.length > 0
+    if(a != null)
+      return a.length > 0
+    return false
   })
 }
 

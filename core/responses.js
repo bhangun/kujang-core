@@ -19,6 +19,7 @@
 
 const _ = require('lodash');
 const prop = require('./properties');
+const utils = require('./utils');
 
 module.exports = {
     responses,
@@ -81,24 +82,26 @@ function _getResponseContentType(contentType, props) {
         /// responses.<responseCode>.content.<contenType>
         contenType = c[0]
 
-        const _ref = c[1].schema.$ref
-        let _comp = ''
-        if(_ref)
-        _comp = _ref.split(RegExp(`^#/components/schemas/`))[1]
+        if(c[1].schema !=null){
+          const _ref = c[1].schema.$ref
+          let _comp = ''
+          if(_ref)
+            _comp = _ref.split(RegExp(`^#/components/schemas/`))[1]
 
-        /// responses.<responseCode>.content.schema.xml.name
-        type = c[1].schema.xml ? c[1].schema.xml.name : _comp
+          /// responses.<responseCode>.content.schema.xml.name
+          type = c[1].schema.xml ? c[1].schema.xml.name : _comp
 
-        /// responses.<responseCode>.content.schema.required
-        req = c[1].schema.required
+          /// responses.<responseCode>.content.schema.required
+          req = c[1].schema.required
 
-        /// responses.<responseCode>.content.schema.properties
-        _props = c[1].schema.properties
+          /// responses.<responseCode>.content.schema.properties
+          _props = c[1].schema.properties
 
-        /// responses.<responseCode>.content.schema.items
-        _items.type = c[1].schema.items ? c[1].schema.items.type : ''
+          /// responses.<responseCode>.content.schema.items
+          _items.type = c[1].schema.items ? c[1].schema.items.type : ''
 
-        _items.properties = c[1].schema.items ? prop.getProperties(c[1].schema.items.properties, []) : []
+          _items.properties = c[1].schema.items ? prop.getProperties(c[1].schema.items.properties, []) : []
+        }
     })
 
     props.push(_items.properties)
@@ -134,3 +137,19 @@ function getResponseType(responses, properties) {
   
     return responseType
   }
+
+/**
+ * findEqualObject from array
+ * @param {array} objects 
+ * @param {object} properties 
+ * @returns object which equals with properties instead []
+ */
+function findEqualObject(objects, properties) {
+  let index = 0
+  const obj =  _.filter(objects, (a,i) => {
+    index = i
+    return _.isEqual(a, properties)
+  })
+
+  return {name: 'Object'+index, object: obj, index: index}
+}

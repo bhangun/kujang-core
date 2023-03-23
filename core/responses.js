@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 /**
- * Copyright 2013-2021 the original author or authors Bhangun Hartani
+ * Copyright 2023 Bhangun Hartani
  * This file is part of the Kujang Generator
  * for more information.
  *
@@ -19,7 +19,6 @@
 
 const _ = require('lodash');
 const prop = require('./properties');
-const utils = require('./utils');
 
 module.exports = {
     responses,

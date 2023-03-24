@@ -28,33 +28,35 @@ module.exports = {
  * @param {*} api 
  */
 function getSecurity(api) {
+
     const schema = []
     if (api) Object.entries(api).forEach(sch => {
       let scopes = []
       let url = ''
-      let typeName = ''
-      let position = ''
-  
+      let typeName = sch[1].name ? sch[1].name : ''
+      let position = sch[1].in ? sch[1].in : ''
+      let protocol = sch[1].type? sch[1].type : ''
+      let bearerFormat = sch[1].bearerFormat ? sch[1].bearerFormat : ''
+      let type = sch[1].scheme ? sch[1].scheme : ''  
+
       if (sch[1].flows) {
         scopes = getScopes(sch[1].flows.implicit.scopes)
         url = sch[1].flows.implicit.authorizationUrl
       }
   
-      if (sch[1].name)
-        typeName = sch[1].name
-  
-      if (sch[1].in)
-        position = sch[1].in
-  
       schema.push({
         name: sch[0],
-        type: sch[1].type,
+        protocol: protocol,
         typeName: typeName,
+        type: type,
+        position : position,
+        bearerFormat : bearerFormat,
         url: url,
         in: position,
         scopes: scopes
       })
     })
+
     return schema
 }
   

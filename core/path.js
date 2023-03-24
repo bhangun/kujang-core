@@ -55,6 +55,8 @@ function getPaths(api, props) {
  function getPathMethod(path, props) {
     const methods = []
   
+   // console.log(path)
+
     if (path) Object.entries(path).forEach(method => {
       const m = method[1];
       const reqContentType = []
@@ -62,7 +64,7 @@ function getPaths(api, props) {
       let required = []
       let _properties = []
   
-      if (m.requestBody)
+      if (m.requestBody){
         Object.entries(m.requestBody.content).forEach(c => {
   
           /**  requestBody.content.<contentType> */
@@ -77,11 +79,14 @@ function getPaths(api, props) {
           /// requestBody.content.<contentType>.schema.properties
           _properties = c[1].schema.properties ? c[1].schema.properties : []
         })
+      }
   
       methods.push({
   
         /// paths.<path>.<method>
         method: method[0],
+
+        name: m.tags && m.tags.length > 0 ? m.tags[0]:'',
   
         /// List parameter
         parameters: m.parameters,
@@ -106,6 +111,8 @@ function getPaths(api, props) {
         responses: rs.responses(m, props)
       })
     })
+
+    
     return methods
   }
 

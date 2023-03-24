@@ -34,6 +34,7 @@ module.exports = {
     if (props) Object.entries(props).forEach(el => {
       const format = el[1].format ? el[1].format : ''
       const type = el[1].type ? el[1].type : ''
+      const typeItems = el[1].items ? el[1].items.type : ''
       const enumm = el[1].enum
       const isEnum = el[1].enum ? true : false
   
@@ -41,6 +42,7 @@ module.exports = {
         name: el[0],
         // dartType: transformType({ type: type, format: format, isEnum: isEnum }),
         type: type,
+        typeItems: typeItems,
         enum: enumm ? _.join(enumm, ',') : '',
         format: format,
         isEnum: isEnum,

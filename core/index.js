@@ -302,11 +302,11 @@ module.exports = class extends Generator {
   }
 
   /**
-   * propsForService
+   * propsForServices
    * @param {*} paths 
    * @returns 
    */
-  propsForService(paths) {
+  propsForServices(paths) {
     return utils.propsForServices(paths)
   }
 

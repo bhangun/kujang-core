@@ -84,18 +84,18 @@ function writingEntity2() {
     })
 }
 
-function writingJson() {
+function writingJson(path) {
 
-    utils.transformApi(this.appsName, props.path_api, (api, origin) => {
-
-        // this.writeKujangJson(this.appsName,api)
-        // this.writeOriginJson(this.appsName,origin)
+    utils.transformApi('test1', path, (api, origin) => {
+       // this.fs.writeJSON(path + '/.kujang.json', api)
+        this.writeKujangJson('tes1',api)
+       // utils.writeOriginJson('test1',origin)
     })
 
-    utils.transformApi(this.appsName, API5, (api) => {
+    /* utils.transformApi(this.appsName, API5, (api) => {
         this.props = api
 
-    })
+    }) */
 }
 
 function cobaArray() {
@@ -163,10 +163,10 @@ function testArray(_path) {
         this.props = api
 
         // utils.writingJson(api)
-        //const com = _.compact(api.paths)
-        //console.log(com)
-        const arr = api
-        const arr2 = utils.uniqProperties(api.properties)
+        const com = _.compact(api.paths)
+       // console.log(com)
+        //const arr = api
+        //const arr2 = utils.uniqProperties(api.properties)
        /*  const arr3 = _.filter(api.properties, (p)=>{
              return _.map( arr2, p)   
         }) */
@@ -181,7 +181,7 @@ function testArray(_path) {
             return a.length <6})
 */
 
-        const arr6 = _.filter(arr2,(a,i)=>{
+        /* const arr6 = _.filter(arr2,(a,i)=>{
             //console.log(coba)
             console.log(i)
                 return _.isEqual(a, coba)
@@ -204,15 +204,16 @@ function testArray(_path) {
        /*  fs.writeFile('origin.json', JSON.stringify(api), (err) => {
             if (err) throw err;
             console.log('The file has been saved!');
-        }) */
-
-    })
+        }) 
+*/
+    }) 
 }
 
 
 
 
 testArray(API6)
+//writingJson(API6)
 //cobaArray()
 //writingEntity()
 //writingEntity2()

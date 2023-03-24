@@ -24,8 +24,8 @@ const rs = require('./responses');
 const sec = require('./security');
 
 module.exports = {
+  payloadAllProps,
   transformApi,
-  mappingProps,
   mappingEntities,
   mappingFields,
   transformType,
@@ -55,25 +55,29 @@ module.exports = {
     properties: [{}]
   }
  */
-function mappingProps(api, appsName) {
+function payloadAllProps(api, appsName) {
   const _props = []
   const _entities = mappingEntities(appsName, api)
-  const _paths = path.getPaths(api, _props)
   const _uniqprop =  uniqProperties(_props)
+  const paths = path.getPaths(api, _props)
+  const properties = _uniqprop? _uniqprop :[]
+
 
   const schema =  {
     appsName: appsName,
     baseName: appsName,
     packageFolder: appsName,
     info: api.info,
-    servers: api.servers,
+    endpoint: getEndpoint(api),
     securitySchemes: api.components ? sec.getSecurity(api.components.securitySchemes) : {},
     tags: api.tags,
-    paths: _paths, 
+    methods: propsForServices(paths, properties, 'dart' ),
+    paths: paths, 
+    entities: _entities.length > 0 ? _entities: entityFromProperties(_uniqprop),
+    properties: properties
   }
 
-  schema.entities = _entities.length>0? _entities: entityFromProperties(_uniqprop) 
-  schema.properties = _uniqprop? _uniqprop :[]
+  //console.log(schema.methods)
 
   return schema
 }
@@ -104,6 +108,11 @@ function mappingEntities(appsName, api) {
 
   const schema = api.components ? api.components.schemas : {}
   const entities = []
+
+  console.log('mappingEntities')
+
+  console.log('---------')
+  console.log(api.components.schemas)
 
   if (schema) Object.entries(schema).forEach(entity => {
     entities.push({
@@ -290,7 +299,7 @@ function transformApi(appsName, path, callback) {
       console.error(err);
     }
     else {
-      callback(mappingProps(api, appsName), api)
+      callback(payloadAllProps(api, appsName), api)
     }
   })
 }
@@ -305,6 +314,10 @@ function propsForServices(paths, properties, lang) {
   const methods = []
   for (const i in paths) {
     for (const m in paths[i].methods) {
+
+      //console.log('---propsForServices----')
+      //console.log(paths[i].methods[m].responses)
+
 
       const responseType = rs.getResponseType(paths[i].methods[m].responses, properties)
 
@@ -332,6 +345,8 @@ function propsForServices(paths, properties, lang) {
       })
     }
   }
+
+ // console.log(methods)
   return methods
 }
 
@@ -564,7 +579,11 @@ function findEqualObject(objects, properties) {
   return {name: 'Object'+index, object: obj, index: index}
 }
 
-
+/**
+ * entityFromProperties from properties
+ * @param {array} properties 
+ * @returns entities[]
+ */
 function entityFromProperties(properties){
   const entities = []
   properties.forEach((el, i) =>{
@@ -606,3 +625,22 @@ function entityFromProperties(properties){
   return entities
 }
 
+/**
+ * Get endpoint information
+ */
+function getEndpoint(api) {
+
+  var endpoint = api.servers !=null && api.servers.length == 1 && api.servers.length > 0? api.servers[0].url : 'localhost'
+  var protocol = api.schemes !=null && api.schemes.length == 1 && api.schemes.length > 0? api.schemes[0] : 'http'
+
+  const schema =  {
+    url: endpoint,
+    protocol: protocol,
+    host: api.host ? api.host : '',
+    basePath: api.basePath ? api.basePath : '',
+    servers: api.servers,
+    schemes: api.schemes
+  }
+
+  return schema
+}

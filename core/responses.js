@@ -34,25 +34,30 @@ module.exports = {
 function responses(list, props) {
     const responses = []
 
-    if (list && list.responses)
+    if (list)
         Object.entries(list.responses).forEach(r => {
 
         let headersType = []
+        const responseCode = r[0]
+        const content = r[1].content ? _getResponseContentType(r[1].content, props) : []
 
-        if (r[1].headers)
-            Object.entries(r[1].headers).forEach(c => {
+
+        if (r[1].headers){
+          Object.entries(r[1].headers).forEach(c => {
             headersType.push(c[0])
-            })
+          })
+        }
 
+       
         responses.push({
             /// responses.<responseCode>
-            code: r[0],
+            code: responseCode,
 
             /// responses.<responseCode>.description
             description: r[1].description ? r[1].description : '',
 
             /// responses.<responseCode>.content
-            content: r[1].content ? _getResponseContentType(r[1].content, props) : [],
+            content: content,
 
             /// responses.<responseCode>.content
             //required: required,
@@ -60,6 +65,8 @@ function responses(list, props) {
             headers: headersType
         })
         })
+
+    // console.log(responses)
     return responses;
 }
 
@@ -110,13 +117,17 @@ function _getResponseContentType(contentType, props) {
         component: _.capitalize(type),
         required: req,
         properties: prop.getProperties(_props, []),
-        items: _items
+        responseObject: _items
     }
 }
 
 
 
 function getResponseType(responses, properties) {
+
+  //console.log(responses)
+
+
     let responseType = 'void'
     // RESPONSE
     const _responses = responses;
